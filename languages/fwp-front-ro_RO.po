@@ -1,0 +1,186 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: FacetWP (front)\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-02-21 14:01+0000\n"
+"PO-Revision-Date: 2022-08-15 12:42+0000\n"
+"Last-Translator: Matt Gibbs <hello@facetwp.com>\n"
+"Language-Team: Romanian\n"
+"Language: ro_RO\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n==0 || (n!=1 && n%100>=1 && "
+"n%100<=19) ? 1 : 2);\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.5.0; wp-5.6\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: includes/facets/rating.php:111
+msgid "& up"
+msgstr "& up"
+
+#: includes/facets/fselect.php:37 includes/facets/fselect.php:80
+#: includes/facets/dropdown.php:35 includes/facets/hierarchy.php:26
+msgid "Any"
+msgstr "Orice"
+
+#: includes/facets/date_range.php:282
+msgid "Clear"
+msgstr "Sterge"
+
+#: includes/facets/proximity.php:180
+msgid "Clear location"
+msgstr "Ștergeți locația"
+
+#: includes/facets/date_range.php:23
+msgid "Date"
+msgstr "Data"
+
+#: includes/facets/sort.php:154
+msgid "Date (Newest)"
+msgstr "Data (cele mai noi)"
+
+#: includes/facets/sort.php:161
+msgid "Date (Oldest)"
+msgstr "Data (cea mai veche)"
+
+#: includes/facets/proximity.php:285
+msgid "Distance"
+msgstr "Distanță"
+
+#: includes/facets/date_range.php:29
+msgid "End Date"
+msgstr "Data de sfârșit"
+
+#: includes/facets/search.php:20
+msgid "Enter keywords"
+msgstr "Introdu cuvinte cheie"
+
+#: includes/facets/proximity.php:64
+msgid "Enter location"
+msgstr "Vă rugăm să introduceți ID-ul Locatiei"
+
+#: includes/facets/autocomplete.php:157
+msgid "Enter {n} or more characters"
+msgstr ""
+
+#: includes/integrations/woocommerce/woocommerce.php:502
+msgid "Featured"
+msgstr ""
+
+#: includes/facets/number_range.php:32 includes/facets/autocomplete.php:64
+msgid "Go"
+msgstr "Mergi"
+
+#: includes/class-display.php:175
+msgid "Go to next page"
+msgstr ""
+
+#: includes/class-display.php:174
+msgid "Go to page"
+msgstr ""
+
+#: includes/class-display.php:176
+msgid "Go to previous page"
+msgstr ""
+
+#: includes/integrations/woocommerce/woocommerce.php:496
+msgid "In Stock"
+msgstr "În stoc"
+
+#: includes/facets/autocomplete.php:156
+msgid "Loading"
+msgstr ""
+
+#: includes/facets/number_range.php:29
+msgid "Max"
+msgstr "Max"
+
+#: includes/facets/number_range.php:26
+msgid "Min"
+msgstr "Min"
+
+#: includes/integrations/acf/acf.php:293
+msgid "No"
+msgstr "Nu"
+
+#: includes/facets/autocomplete.php:97 includes/facets/autocomplete.php:158
+msgid "No results"
+msgstr "Nici un rezultat"
+
+#: includes/class-display.php:194 includes/facets/fselect.php:87
+msgid "No results found"
+msgstr "Niciun rezultat găsit"
+
+#: includes/facets/number_range.php:23
+msgid "Number"
+msgstr "Număr"
+
+#: includes/class-renderer.php:512
+msgid "of"
+msgstr "din"
+
+#: includes/integrations/woocommerce/woocommerce.php:499
+msgid "On Sale"
+msgstr "La reducere"
+
+#: includes/integrations/woocommerce/woocommerce.php:496
+msgid "Out of Stock"
+msgstr "Stoc epuizat"
+
+#: includes/class-renderer.php:569
+msgid "Per page"
+msgstr "Per pagină"
+
+#: includes/facets/slider.php:20 includes/facets/reset.php:15
+msgid "Reset"
+msgstr "Reset"
+
+#: includes/facets/fselect.php:86
+msgid "Search"
+msgstr "Caută"
+
+#: includes/facets/checkboxes.php:131 includes/facets/hierarchy.php:161
+msgid "See less"
+msgstr "Vedea mai puțin"
+
+#: includes/facets/hierarchy.php:160
+msgid "See more"
+msgstr "Vezi mai mult"
+
+#: includes/facets/checkboxes.php:130
+msgid "See {num} more"
+msgstr "Vezi {num} mai multe"
+
+#: includes/facets/sort.php:136
+msgid "Sort by"
+msgstr "Sortare după"
+
+#: includes/facets/date_range.php:26
+msgid "Start Date"
+msgstr "Data de început"
+
+#: includes/facets/autocomplete.php:61
+msgid "Start typing"
+msgstr "Începeți să tastați"
+
+#: includes/facets/sort.php:140
+msgid "Title (A-Z)"
+msgstr "Titlu (A-Z)"
+
+#: includes/facets/sort.php:147
+msgid "Title (Z-A)"
+msgstr "Titlu (Z-A)"
+
+#: includes/facets/rating.php:112
+msgid "Undo"
+msgstr "Anulare"
+
+#: includes/integrations/acf/acf.php:293
+msgid "Yes"
+msgstr "Da"
+
+#: includes/facets/fselect.php:85
+msgid "{n} selected"
+msgstr "{n} selectat"

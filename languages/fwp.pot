@@ -1,0 +1,1025 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: FacetWP\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-08-15 12:40+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Matt Gibbs <hello@facetwp.com>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.4.1; wp-5.4.2"
+
+#: includes/class-settings.php:338
+msgid "Activate"
+msgstr ""
+
+#: includes/class-settings.php:546
+msgid "Activating"
+msgstr ""
+
+#: templates/page-settings.php:153 templates/page-settings.php:181
+msgid "Add new"
+msgstr ""
+
+#: includes/class-settings.php:516
+msgid "Add query filter"
+msgstr ""
+
+#: includes/class-settings.php:515
+msgid "Add query sort"
+msgstr ""
+
+#. Description of the plugin
+msgid "Advanced Filtering for WordPress"
+msgstr ""
+
+#: includes/class-settings.php:500
+msgid "All post types"
+msgstr ""
+
+#: includes/class-settings.php:180
+msgid "AND (match all)"
+msgstr ""
+
+#: includes/class-settings.php:501
+msgid "and show"
+msgstr ""
+
+#: includes/class-settings.php:111
+msgid "Any"
+msgstr ""
+
+#: includes/class-settings.php:476
+msgid "Author field"
+msgstr ""
+
+#: includes/facets/search.php:74
+msgid "Auto refresh"
+msgstr ""
+
+#: includes/facets/reset.php:80
+msgid "Auto-hide"
+msgstr ""
+
+#: includes/facets/autocomplete.php:10
+msgid "Autocomplete"
+msgstr ""
+
+#: includes/class-settings.php:458
+msgid "Background color"
+msgstr ""
+
+#: includes/class-settings.php:215
+msgid "Basic"
+msgstr ""
+
+#: includes/class-settings.php:459
+msgid "Border"
+msgstr ""
+
+#: includes/class-settings.php:466
+msgid "Border color"
+msgstr ""
+
+#: includes/class-settings.php:460
+msgid "Border style"
+msgstr ""
+
+#: includes/class-settings.php:467
+msgid "Border width"
+msgstr ""
+
+#: includes/facets/reset.php:59
+msgid "Button"
+msgstr ""
+
+#: includes/class-settings.php:497
+msgid "Button border"
+msgstr ""
+
+#: includes/class-settings.php:470
+msgid "Button padding"
+msgstr ""
+
+#: includes/class-settings.php:468
+msgid "Button text"
+msgstr ""
+
+#: includes/class-settings.php:469
+msgid "Button text color"
+msgstr ""
+
+#: includes/facets/checkboxes.php:7
+msgid "Checkboxes"
+msgstr ""
+
+#: includes/class-settings.php:517
+msgid "Clear"
+msgstr ""
+
+#: includes/class-settings.php:524
+msgid "Column"
+msgstr ""
+
+#: includes/class-settings.php:473
+msgid "Column widths"
+msgstr ""
+
+#: includes/class-settings.php:510
+msgid "Comment Count"
+msgstr ""
+
+#: includes/class-settings.php:212
+msgid "Compare type"
+msgstr ""
+
+#: includes/class-settings.php:474 includes/class-settings.php:521
+msgid "Content"
+msgstr ""
+
+#: includes/class-settings.php:551
+msgid "Convert to query args"
+msgstr ""
+
+#: includes/class-settings.php:544
+msgid "Copied!"
+msgstr ""
+
+#: includes/class-settings.php:529
+msgid "Copy shortcode"
+msgstr ""
+
+#: includes/class-settings.php:195
+msgid "Count"
+msgstr ""
+
+#: includes/facets/pager.php:250
+msgid "Count text (no results)"
+msgstr ""
+
+#: includes/facets/pager.php:239
+msgid "Count text (plural)"
+msgstr ""
+
+#: includes/facets/pager.php:245
+msgid "Count text (singular)"
+msgstr ""
+
+#: includes/class-settings.php:496
+msgid "CSS class"
+msgstr ""
+
+#: includes/class-settings.php:472
+msgid "Custom CSS"
+msgstr ""
+
+#: includes/class-helper.php:492 includes/class-settings.php:512
+msgid "Custom Fields"
+msgstr ""
+
+#: includes/class-settings.php:490
+msgid "Custom URL"
+msgstr ""
+
+#: includes/class-settings.php:463
+msgid "Dashed"
+msgstr ""
+
+#: includes/class-settings.php:530
+msgid "Data source"
+msgstr ""
+
+#: includes/class-settings.php:482
+msgid "Date"
+msgstr ""
+
+#: includes/class-settings.php:484
+msgid "Date format"
+msgstr ""
+
+#: includes/facets/date_range.php:7
+msgid "Date Range"
+msgstr ""
+
+#: includes/class-settings.php:51
+msgid "Debug mode"
+msgstr ""
+
+#: includes/integrations/searchwp/searchwp.php:203
+msgid "Default"
+msgstr ""
+
+#: includes/class-settings.php:109 includes/facets/sort.php:56
+#: includes/facets/pager.php:265
+msgid "Default label"
+msgstr ""
+
+#: includes/facets/proximity.php:232
+msgid "Default radius"
+msgstr ""
+
+#: includes/class-settings.php:552
+msgid "Delete item?"
+msgstr ""
+
+#: includes/class-settings.php:533
+msgid "Display"
+msgstr ""
+
+#: includes/class-settings.php:536
+msgid "Display Code"
+msgstr ""
+
+#: includes/facets/date_range.php:133
+msgid "Display format"
+msgstr ""
+
+#: templates/page-settings.php:189
+msgid "Display mode"
+msgstr ""
+
+#: includes/class-settings.php:477
+msgid "Display name"
+msgstr ""
+
+#: includes/class-settings.php:189
+msgid "Display value"
+msgstr ""
+
+#: includes/class-ajax.php:138
+msgid "Done, please re-index"
+msgstr ""
+
+#: includes/facets/pager.php:221
+msgid "Dots label"
+msgstr ""
+
+#: includes/class-settings.php:464
+msgid "Dotted"
+msgstr ""
+
+#: includes/class-settings.php:465
+msgid "Double"
+msgstr ""
+
+#: includes/facets/proximity.php:210 includes/facets/dropdown.php:7
+msgid "Dropdown"
+msgstr ""
+
+#: includes/class-settings.php:65
+msgid "Enable if your store uses variable products."
+msgstr ""
+
+#: includes/class-settings.php:216
+msgid "Enclose"
+msgstr ""
+
+#: includes/facets/date_range.php:124
+msgid "End Date"
+msgstr ""
+
+#: includes/class-settings.php:518
+msgid "Enter term slugs"
+msgstr ""
+
+#: includes/class-settings.php:519
+msgid "Enter values"
+msgstr ""
+
+#: includes/class-ajax.php:200
+msgid "Error"
+msgstr ""
+
+#: includes/class-ajax.php:80
+msgid "Error: invalid JSON"
+msgstr ""
+
+#: includes/facets/number_range.php:115
+msgid "Exact"
+msgstr ""
+
+#: includes/facets/date_range.php:122
+msgid "Exact Date"
+msgstr ""
+
+#: includes/class-settings.php:163
+msgid "Exclude these values"
+msgstr ""
+
+#: includes/class-settings.php:79 includes/class-settings.php:361
+msgid "Export"
+msgstr ""
+
+#: includes/class-settings.php:177
+msgid "Facet logic"
+msgstr ""
+
+#: includes/class-settings.php:528
+msgid "Facet type"
+msgstr ""
+
+#: templates/page-settings.php:108 templates/page-settings.php:148
+#: templates/page-settings.php:152
+msgid "Facets"
+msgstr ""
+
+#. Name of the plugin
+msgid "FacetWP"
+msgstr ""
+
+#: index.php:72
+#, php-format
+msgid ""
+"FacetWP requires PHP %s or above. Please contact your host and request a PHP "
+"upgrade."
+msgstr ""
+
+#: includes/class-request.php:356
+msgid "FacetWP was unable to auto-detect the post listing"
+msgstr ""
+
+#. Author of the plugin
+msgid "FacetWP, LLC"
+msgstr ""
+
+#: includes/class-settings.php:499
+msgid "Fetch"
+msgstr ""
+
+#: includes/class-settings.php:480
+msgid "Field type"
+msgstr ""
+
+#: includes/facets/number_range.php:112 includes/facets/date_range.php:119
+msgid "Fields to show"
+msgstr ""
+
+#: includes/class-settings.php:457
+msgid "Font size"
+msgstr ""
+
+#: includes/facets/slider.php:147
+msgid "Format"
+msgstr ""
+
+#: includes/facets/fselect.php:7
+msgid "fSelect"
+msgstr ""
+
+#: includes/class-settings.php:596
+msgid "full"
+msgstr ""
+
+#: includes/class-settings.php:13
+msgid "General"
+msgstr ""
+
+#: includes/class-settings.php:344
+msgid "Get an API key"
+msgstr ""
+
+#: includes/class-settings.php:20
+msgid "Google Maps API key"
+msgstr ""
+
+#: includes/class-settings.php:535
+msgid "Help"
+msgstr ""
+
+#: includes/class-settings.php:494
+msgid "Hide item?"
+msgstr ""
+
+#: includes/class-settings.php:123
+msgid "Hierarchical"
+msgstr ""
+
+#: includes/facets/hierarchy.php:7
+msgid "Hierarchy"
+msgstr ""
+
+#: includes/class-settings.php:188
+msgid "Highest count"
+msgstr ""
+
+#: includes/class-settings.php:514
+msgid "Hit Enter"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "https://facetwp.com/"
+msgstr ""
+
+#: includes/class-settings.php:475
+msgid "Image size"
+msgstr ""
+
+#: includes/class-settings.php:83 includes/class-settings.php:369
+msgid "Import"
+msgstr ""
+
+#: includes/class-settings.php:76
+msgid "Import / Export"
+msgstr ""
+
+#: includes/class-ajax.php:274
+msgid "Imported"
+msgstr ""
+
+#: includes/class-settings.php:550
+msgid "Importing"
+msgstr ""
+
+#: includes/class-builder.php:233
+msgid "In Stock"
+msgstr ""
+
+#: includes/facets/reset.php:65
+msgid "Include / exclude"
+msgstr ""
+
+#: includes/class-settings.php:69
+msgid "Include all products?"
+msgstr ""
+
+#: includes/class-settings.php:539
+msgid "Indexing"
+msgstr ""
+
+#: includes/class-settings.php:541
+msgid "Indexing complete"
+msgstr ""
+
+#: includes/facets/pager.php:215
+msgid "Inner size"
+msgstr ""
+
+#: includes/class-settings.php:485
+msgid "Input format"
+msgstr ""
+
+#: includes/class-settings.php:217
+msgid "Intersect"
+msgstr ""
+
+#: includes/facets/proximity.php:203
+msgid "Kilometers"
+msgstr ""
+
+#: includes/class-settings.php:526 templates/page-settings.php:159
+#: templates/page-settings.php:187
+msgid "Label"
+msgstr ""
+
+#: includes/class-settings.php:520
+msgid "Layout"
+msgstr ""
+
+#: includes/class-settings.php:16
+msgid "License key"
+msgstr ""
+
+#: includes/class-settings.php:487 includes/facets/reset.php:60
+msgid "Link"
+msgstr ""
+
+#: includes/class-settings.php:488
+msgid "Link type"
+msgstr ""
+
+#: templates/page-settings.php:109 templates/page-settings.php:176
+#: templates/page-settings.php:180
+msgid "Listings"
+msgstr ""
+
+#: includes/class-settings.php:43
+msgid "Load a11y support"
+msgstr ""
+
+#: includes/class-settings.php:35
+msgid "Load jQuery"
+msgstr ""
+
+#: includes/facets/pager.php:210
+msgid "Load more"
+msgstr ""
+
+#: includes/facets/pager.php:255
+msgid "Load more text"
+msgstr ""
+
+#: includes/class-settings.php:549
+msgid "Loading"
+msgstr ""
+
+#: includes/facets/pager.php:260
+msgid "Loading text"
+msgstr ""
+
+#: includes/facets/proximity.php:192
+msgid "Longitude"
+msgstr ""
+
+#: includes/class-settings.php:542
+msgid "Looking"
+msgstr ""
+
+#: includes/facets/number_range.php:117
+msgid "Max"
+msgstr ""
+
+#: includes/class-settings.php:511
+msgid "Menu Order"
+msgstr ""
+
+#: includes/facets/proximity.php:202
+msgid "Miles"
+msgstr ""
+
+#: includes/facets/number_range.php:116
+msgid "Min"
+msgstr ""
+
+#: includes/facets/number_range.php:114
+msgid "Min + Max"
+msgstr ""
+
+#: includes/class-settings.php:135
+msgid "Multi-select"
+msgstr ""
+
+#: includes/class-settings.php:527 templates/page-settings.php:160
+#: templates/page-settings.php:188
+msgid "Name"
+msgstr ""
+
+#: includes/class-settings.php:513
+msgid "Narrow results by"
+msgstr ""
+
+#: includes/facets/pager.php:233
+msgid "Next button label"
+msgstr ""
+
+#: includes/class-settings.php:461 includes/facets/proximity.php:212
+msgid "None"
+msgstr ""
+
+#: includes/class-settings.php:429
+msgid "Not yet activated"
+msgstr ""
+
+#: includes/class-ajax.php:238
+msgid "Nothing to import"
+msgstr ""
+
+#: includes/class-settings.php:483
+msgid "Number"
+msgstr ""
+
+#: includes/class-settings.php:486
+msgid "Number format"
+msgstr ""
+
+#: includes/class-settings.php:453
+msgid "Number of grid columns"
+msgstr ""
+
+#: includes/facets/number_range.php:7
+msgid "Number Range"
+msgstr ""
+
+#: includes/class-settings.php:162
+msgid "Off"
+msgstr ""
+
+#: includes/class-builder.php:238
+msgid "On Sale"
+msgstr ""
+
+#: includes/class-settings.php:491
+msgid "Open in new tab?"
+msgstr ""
+
+#: includes/class-settings.php:181
+msgid "OR (match any)"
+msgstr ""
+
+#: includes/class-settings.php:206
+msgid "Other data source"
+msgstr ""
+
+#: includes/class-builder.php:233
+msgid "Out of Stock"
+msgstr ""
+
+#: includes/class-settings.php:367
+msgid "Overwrite existing items?"
+msgstr ""
+
+#: includes/class-settings.php:495
+msgid "Padding"
+msgstr ""
+
+#: includes/facets/pager.php:208
+msgid "Page numbers"
+msgstr ""
+
+#: includes/facets/pager.php:10
+msgid "Pager"
+msgstr ""
+
+#: includes/facets/pager.php:206
+msgid "Pager type"
+msgstr ""
+
+#: includes/class-settings.php:117
+msgid "Parent term"
+msgstr ""
+
+#: includes/class-settings.php:366
+msgid "Paste the import code here"
+msgstr ""
+
+#: includes/facets/pager.php:211
+msgid "Per page"
+msgstr ""
+
+#: includes/class-settings.php:502
+msgid "per page"
+msgstr ""
+
+#: includes/facets/pager.php:270
+msgid "Per page options"
+msgstr ""
+
+#: includes/class-settings.php:114
+msgid "Placeholder text"
+msgstr ""
+
+#: includes/class-updater.php:170
+#, php-format
+msgid ""
+"Please <a href=\"%s\" target=\"_blank\">renew your license</a> for automatic "
+"updates."
+msgstr ""
+
+#: includes/class-updater.php:175
+msgid "Please activate your FacetWP license for automatic updates."
+msgstr ""
+
+#: includes/class-helper.php:482
+msgid "Post Author"
+msgstr ""
+
+#: includes/class-helper.php:479 includes/class-settings.php:508
+msgid "Post Date"
+msgstr ""
+
+#: includes/class-helper.php:480 includes/class-settings.php:509
+msgid "Post Modified"
+msgstr ""
+
+#: includes/class-settings.php:506
+msgid "Post Name"
+msgstr ""
+
+#: includes/class-helper.php:481 includes/class-settings.php:505
+msgid "Post Title"
+msgstr ""
+
+#: includes/class-helper.php:478 includes/class-settings.php:507
+msgid "Post Type"
+msgstr ""
+
+#: templates/page-settings.php:190
+msgid "Post types"
+msgstr ""
+
+#: includes/class-settings.php:489
+msgid "Post URL"
+msgstr ""
+
+#: includes/class-helper.php:476 includes/class-settings.php:504
+msgid "Posts"
+msgstr ""
+
+#: includes/class-settings.php:492 includes/facets/slider.php:135
+msgid "Prefix"
+msgstr ""
+
+#: includes/class-settings.php:148
+msgid "Preserve ghost order"
+msgstr ""
+
+#: includes/class-settings.php:545
+msgid "Press CTRL+C to copy"
+msgstr ""
+
+#: includes/facets/pager.php:227
+msgid "Prev button label"
+msgstr ""
+
+#: includes/facets/proximity.php:11
+msgid "Proximity"
+msgstr ""
+
+#: templates/page-settings.php:122
+msgid "Purge the index table"
+msgstr ""
+
+#: includes/class-settings.php:543
+msgid "Purging"
+msgstr ""
+
+#: includes/class-settings.php:534
+msgid "Query"
+msgstr ""
+
+#: includes/class-settings.php:537
+msgid "Query Arguments"
+msgstr ""
+
+#: includes/facets/radio.php:7
+msgid "Radio"
+msgstr ""
+
+#: includes/facets/proximity.php:216
+msgid "Radius options"
+msgstr ""
+
+#: includes/facets/proximity.php:208
+msgid "Radius UI"
+msgstr ""
+
+#: includes/facets/proximity.php:227
+msgid "Range (max)"
+msgstr ""
+
+#: includes/facets/proximity.php:222
+msgid "Range (min)"
+msgstr ""
+
+#: includes/class-settings.php:190
+msgid "Raw value"
+msgstr ""
+
+#: includes/class-settings.php:547 templates/page-settings.php:116
+msgid "Re-index"
+msgstr ""
+
+#: includes/facets/reset.php:7
+msgid "Reset"
+msgstr ""
+
+#: includes/facets/reset.php:70
+msgid "Reset all except these facets"
+msgstr ""
+
+#: includes/facets/reset.php:68
+msgid "Reset everything"
+msgstr ""
+
+#: includes/facets/reset.php:69
+msgid "Reset only these facets"
+msgstr ""
+
+#: includes/class-settings.php:226
+msgid "Reset text"
+msgstr ""
+
+#: includes/facets/reset.php:57
+msgid "Reset UI"
+msgstr ""
+
+#: includes/facets/pager.php:209
+msgid "Result counts"
+msgstr ""
+
+#: includes/class-settings.php:523
+msgid "Row"
+msgstr ""
+
+#: templates/page-settings.php:163
+msgid "Rows"
+msgstr ""
+
+#: templates/page-settings.php:127
+msgid "Save changes"
+msgstr ""
+
+#: includes/class-settings.php:538
+msgid "Saving"
+msgstr ""
+
+#: includes/facets/search.php:7
+msgid "Search"
+msgstr ""
+
+#: includes/facets/search.php:69
+msgid "Search engine"
+msgstr ""
+
+#: includes/class-settings.php:471
+msgid "Separator"
+msgstr ""
+
+#: includes/class-settings.php:24
+msgid "Separators"
+msgstr ""
+
+#: includes/class-init.php:134 templates/page-settings.php:110
+msgid "Settings"
+msgstr ""
+
+#: includes/class-ajax.php:73
+msgid "Settings saved"
+msgstr ""
+
+#: includes/class-ajax.php:67
+msgid "Settings saved, please re-index"
+msgstr ""
+
+#: includes/class-settings.php:129
+msgid "Show expanded"
+msgstr ""
+
+#: includes/class-settings.php:70
+msgid "Show facet choices for out-of-stock products?"
+msgstr ""
+
+#: includes/class-settings.php:143
+msgid "Show ghosts"
+msgstr ""
+
+#: templates/page-settings.php:121
+msgid "Show indexable post types"
+msgstr ""
+
+#: templates/page-settings.php:120
+msgid "Show indexer stats"
+msgstr ""
+
+#: includes/class-settings.php:164
+msgid "Show only these values"
+msgstr ""
+
+#: includes/class-ajax.php:277
+msgid "Skipped"
+msgstr ""
+
+#: includes/facets/slider.php:7 includes/facets/proximity.php:211
+msgid "Slider"
+msgstr ""
+
+#: includes/class-settings.php:200
+msgid "Soft limit"
+msgstr ""
+
+#: includes/class-settings.php:462
+msgid "Solid"
+msgstr ""
+
+#: includes/facets/sort.php:11
+msgid "Sort"
+msgstr ""
+
+#: includes/class-settings.php:186 includes/class-settings.php:503
+#: includes/facets/sort.php:58
+msgid "Sort by"
+msgstr ""
+
+#: includes/facets/sort.php:63
+msgid "Sort options"
+msgstr ""
+
+#: templates/page-settings.php:162
+msgid "Source"
+msgstr ""
+
+#: includes/class-settings.php:454
+msgid "Spacing between results"
+msgstr ""
+
+#: includes/facets/rating.php:7
+msgid "Star Rating"
+msgstr ""
+
+#: includes/facets/date_range.php:121
+msgid "Start + End Dates"
+msgstr ""
+
+#: includes/facets/date_range.php:123
+msgid "Start Date"
+msgstr ""
+
+#: includes/class-settings.php:525
+msgid "Start typing"
+msgstr ""
+
+#: includes/facets/slider.php:154
+msgid "Step"
+msgstr ""
+
+#: includes/class-settings.php:548
+msgid "Stop indexer"
+msgstr ""
+
+#: includes/class-settings.php:522
+msgid "Style"
+msgstr ""
+
+#: includes/class-settings.php:493 includes/facets/slider.php:139
+msgid "Suffix"
+msgstr ""
+
+#: templates/page-settings.php:111
+msgid "Support"
+msgstr ""
+
+#: includes/class-settings.php:64
+msgid "Support product variations?"
+msgstr ""
+
+#: includes/class-settings.php:531
+msgid "Switch to advanced mode"
+msgstr ""
+
+#: includes/class-settings.php:532
+msgid "Switch to visual mode"
+msgstr ""
+
+#: includes/class-helper.php:487
+msgid "Taxonomies"
+msgstr ""
+
+#: includes/class-settings.php:191
+msgid "Term order"
+msgstr ""
+
+#: includes/class-settings.php:498
+msgid "Term URL"
+msgstr ""
+
+#: includes/class-settings.php:481
+msgid "Text"
+msgstr ""
+
+#: includes/class-settings.php:456
+msgid "Text color"
+msgstr ""
+
+#: includes/class-settings.php:455
+msgid "Text style"
+msgstr ""
+
+#: includes/class-settings.php:540
+msgid "The index table is empty"
+msgstr ""
+
+#: templates/page-settings.php:161
+msgid "Type"
+msgstr ""
+
+#: includes/class-settings.php:222
+msgid "UI type"
+msgstr ""
+
+#: includes/facets/proximity.php:200
+msgid "Unit of measurement"
+msgstr ""
+
+#: includes/class-settings.php:29
+msgid "URL prefix"
+msgstr ""
+
+#: includes/class-settings.php:479
+msgid "User ID"
+msgstr ""
+
+#: includes/class-settings.php:478
+msgid "User login"
+msgstr ""
+
+#: includes/class-settings.php:436
+msgid "Valid until"
+msgstr ""
+
+#: includes/class-settings.php:159
+msgid "Value modifiers"
+msgstr ""
+
+#: includes/class-settings.php:61
+#: includes/integrations/woocommerce/woocommerce.php:64
+msgid "WooCommerce"
+msgstr ""
+
+#: includes/facets/search.php:60
+msgid "WP Default"
+msgstr ""
