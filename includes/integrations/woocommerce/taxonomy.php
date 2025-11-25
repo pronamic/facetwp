@@ -27,32 +27,33 @@ class FacetWP_Integration_WooCommerce_Taxonomy
      */
     function adjust_term_counts( $terms, $taxonomy, $query_vars ) {
         if ( FWP()->request->is_refresh || ! empty( FWP()->request->url_vars ) ) {
-            if ( 'product_cat' == reset( $taxonomy ) ) {
+            $fields = $query_vars['fields'] ?? 'all';
+            if ( 'product_cat' == reset( $taxonomy ) && 'all' == $fields ) {
                 global $wpdb, $wp_query;
-        
+
                 $sql = $wp_query->request;
-                if ( false !== ( $pos = strpos( $sql, ' ORDER BY' ) ) ) {
+                if ( false !== ( $pos = strpos( $sql, 'ORDER BY' ) ) ) {
                     $sql = substr( $sql, 0, $pos );
                 }
-        
+
                 $post_ids = $wpdb->get_col( $sql );
-        
+
                 if ( ! empty( $post_ids ) ) {
                     $term_counts = [];
                     $post_ids_str = implode( ',', $post_ids );
-        
+
                     $query = "
-                    SELECT term_id, COUNT(term_id) AS term_count
+                    SELECT term_id, COUNT(DISTINCT post_id) AS term_count
                     FROM {$wpdb->prefix}facetwp_index
                     WHERE post_id IN ($post_ids_str)
                     GROUP BY term_id";
-        
+
                     $results = $wpdb->get_results( $query );
-        
+
                     foreach ( $results as $row ) {
                         $term_counts[ $row->term_id ] = (int) $row->term_count;
                     }
-        
+
                     foreach ( $terms as $term ) {
                         $term->count = $term_counts[ $term->term_id ] ?? 0;
                     }
@@ -69,7 +70,7 @@ class FacetWP_Integration_WooCommerce_Taxonomy
      * @since 3.3.10
      */
     function append_url_vars( $term_link, $term, $taxonomy ) {
-        if ( 'product_cat' == $taxonomy ) {
+        if ( 'product_cat' == $taxonomy && did_action( 'woocommerce_shop_loop_header' ) && !did_action( 'woocommerce_after_shop_loop' ) ) {
             $query_string = filter_var( $_SERVER['QUERY_STRING'], FILTER_SANITIZE_URL );
 
             if ( ! empty( $query_string ) ) {

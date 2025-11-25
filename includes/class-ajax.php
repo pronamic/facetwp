@@ -3,6 +3,11 @@
 class FacetWP_Ajax
 {
 
+    public $url_vars;
+    public $query_vars;
+    public $is_preload;
+
+
     function __construct() {
         add_action( 'init', [ $this, 'switchboard' ], 1000 );
     }
@@ -36,7 +41,7 @@ class FacetWP_Ajax
             }
 
             // Authenticated
-            elseif ( current_user_can( 'manage_options' ) ) {
+            elseif ( current_user_can( apply_filters( 'facetwp_admin_settings_capability', 'manage_options' ) ) ) {
                 if ( wp_verify_nonce( $_POST['nonce'], 'fwp_admin_nonce' ) ) {
                     $this->$action();
                 }
@@ -99,13 +104,12 @@ class FacetWP_Ajax
         $type = $_POST['type'];
 
         if ( 'post_types' == $type ) {
-            $post_types = get_post_types( [ 'exclude_from_search' => false, '_builtin' => false ] );
-            $post_types = [ 'post', 'page' ] + $post_types;
-            sort( $post_types );
+
+            $types = FWP()->helper->get_indexable_types();
 
             $response = [
                 'code' => 'success',
-                'message' => implode( ', ', $post_types )
+                'message' => implode( ', ', $types )
             ];
         }
         elseif ( 'indexer_stats' == $type ) {
@@ -114,7 +118,7 @@ class FacetWP_Ajax
 
             $response = [
                 'code' => 'success',
-                'message' => "last indexed: $last_indexed"
+                'message' => "Last indexed: $last_indexed"
             ];
         }
         elseif ( 'cancel_reindex' == $type ) {
@@ -129,9 +133,10 @@ class FacetWP_Ajax
             global $wpdb;
 
             $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}facetwp_index" );
+            $wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}facetwp_temp" );
             delete_option( 'facetwp_version' );
             delete_option( 'facetwp_indexing' );
-            delete_option( 'facetwp_transients' );
+            delete_option( 'facetwp_indexing_data' );
 
             $response = [
                 'code' => 'success',

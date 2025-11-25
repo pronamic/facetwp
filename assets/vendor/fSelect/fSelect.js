@@ -323,13 +323,8 @@ window.fSelect = (() => {
                 wrap.querySelector('.fs-label').innerHTML = label;
 
                 // fire a change event
-                var lastChoice = window.fSelectInit.lastChoice;
-                var currentChoice = input.fselect.getSelectedOptions('value');
-    
-                if (JSON.stringify(lastChoice) !== JSON.stringify(currentChoice)) {
-                    input.dispatchEvent(new Event('change', { bubbles: true }));
-                    input.fselect.trigger('fs:changed', wrap);
-                }
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                input.fselect.trigger('fs:changed', wrap);
 
                 if (!isMultiple) {
                     input.fselect.close();

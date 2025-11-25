@@ -3,19 +3,41 @@
 class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
 {
 
-    /* (array) Associative array containing each post ID and its distance */
+    /* (array) Associative array containing post_id => distance */
     public $distance = [];
 
+    /* (array) Associative array containing post_id => [lat, lng] */
+    public $post_latlng = [];
 
     function __construct() {
         $this->label = __( 'Proximity', 'fwp' );
-        $this->fields = [ 'longitude', 'unit', 'radius_ui', 'radius_options', 'radius_min', 'radius_max', 'radius_default' ];
+        $this->fields = [ 'longitude', 'unit', 'radius_ui', 'radius_options', 'radius_min', 'radius_max', 'radius_default', 'placeholder' ];
 
         add_filter( 'facetwp_index_row', [ $this, 'index_latlng' ], 1, 2 );
         add_filter( 'facetwp_sort_options', [ $this, 'sort_options' ], 1, 2 );
         add_filter( 'facetwp_filtered_post_ids', [ $this, 'sort_by_distance' ], 10, 2 );
+        add_filter( 'facetwp_render_output', [ $this, 'add_places_version' ], 10, 2 );
     }
 
+    /**
+     * Get places version from setting, default to legacy version - places-service
+     * Also can be set with filter
+     * add_filter( 'facetwp_proximity_places_version', function($version) { return 'place-class'; } );
+     * @since 4.4
+     */
+    function get_places_version() {           
+        $places_version = FWP()->helper->get_setting( 'places_version', 'places-service' );        
+        return apply_filters( 'facetwp_proximity_places_version', $places_version );
+    }    
+    
+    /**
+     * Add a places version as FWP.settings.places
+     * @since 4.4
+     */
+    function add_places_version( $output, $params ) {        
+        $output['settings']['places'] = $this->get_places_version();
+        return $output;
+    }
 
     /**
      * Generate the facet HTML
@@ -26,6 +48,9 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
         $facet = $params['facet'];
         $value = $params['selected_values'];
         $unit = empty( $facet['unit'] ) ? 'mi' : $facet['unit'];
+        $unit_display = 'km' == $facet['unit'] ? __( 'km', 'fwp-front' ) : ( 'mi' == $facet['unit'] ? __( 'mi', 'fwp-front' ) : $facet['unit'] );
+        $placeholder = empty( $facet['placeholder'] ) ? __( 'Enter location', 'fwp-front' ) : $facet['placeholder'];
+        $placeholder = facetwp_i18n( $placeholder );
 
         $lat = empty( $value[0] ) ? '' : $value[0];
         $lng = empty( $value[1] ) ? '' : $value[1];
@@ -61,7 +86,7 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
 
         <span class="facetwp-input-wrap">
             <i class="facetwp-icon locate-me"></i>
-            <input type="text" class="facetwp-location" value="<?php echo esc_attr( $location_name ); ?>" placeholder="<?php _e( 'Enter location', 'fwp-front' ); ?>" autocomplete="off" />
+            <input type="text" class="facetwp-location" value="<?php echo esc_attr( $location_name ); ?>" placeholder="<?php echo esc_attr( $placeholder ); ?>" autocomplete="off" />
             <div class="location-results facetwp-hidden"></div>
         </span>
 
@@ -70,7 +95,7 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
         <select class="facetwp-radius facetwp-radius-dropdown">
             <?php foreach ( $radius_options as $radius ) : ?>
             <?php $selected = ( $chosen_radius == $radius ) ? ' selected' : ''; ?>
-            <option value="<?php echo $radius; ?>"<?php echo $selected; ?>><?php echo "$radius $unit"; ?></option>
+            <option value="<?php echo $radius; ?>"<?php echo $selected; ?>><?php echo $radius . ' ' . facetwp_i18n( $unit_display ); ?></option>
             <?php endforeach; ?>
         </select>
 
@@ -84,7 +109,7 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
             />
             <div class="facetwp-radius-label">
                 <span class="facetwp-radius-dist"><?php echo $chosen_radius; ?></span>
-                <span class="facetwp-radius-unit"><?php echo $facet['unit']; ?></span>
+                <span class="facetwp-radius-unit"><?php echo facetwp_i18n( $unit_display ); ?></span>
             </div>
         </div>
 
@@ -145,7 +170,15 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
             }
 
             if ( $dist <= $radius ) {
-                $this->distance[ $row->post_id ] = $dist;
+                $existing = $this->distance[ $row->post_id ] ?? -1;
+
+                if ( -1 == $existing || $dist < $existing ) {
+                    $this->distance[ $row->post_id ] = $dist;
+
+                    if ( apply_filters( 'facetwp_proximity_store_latlng', false ) ) {
+                        $this->post_latlng[ $row->post_id ] = [ $lat2, $lng2 ];
+                    }
+                }
             }
         }
 
@@ -159,23 +192,53 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
      * Output front-end scripts
      */
     function front_scripts() {
-        if ( apply_filters( 'facetwp_proximity_load_js', true ) ) {
+        if ( apply_filters( 'facetwp_proximity_load_js', true ) ) { // back compatibility for filter
 
-            // hard-coded
-            $api_key = defined( 'GMAPS_API_KEY' ) ? GMAPS_API_KEY : '';
+            if ( version_compare( FACETWP_MAP_FACET_VERSION, '2.0', '<' ) || 'places-service' == $this->get_places_version() ) {
 
-            // admin ui
-            $tmp_key = FWP()->helper->get_setting( 'gmaps_api_key' );
-            $api_key = empty( $tmp_key ) ? $api_key : $tmp_key;
+                // hard-coded
+                $api_key = defined( 'GMAPS_API_KEY' ) ? GMAPS_API_KEY : '';
 
-            // hook
-            $api_key = apply_filters( 'facetwp_gmaps_api_key', $api_key );
+                // admin ui
+                $tmp_key = FWP()->helper->get_setting( 'gmaps_api_key' );
+                $api_key = empty( $tmp_key ) ? $api_key : $tmp_key;
 
-            FWP()->display->assets['gmaps'] = '//maps.googleapis.com/maps/api/js?libraries=places&key=' . trim( $api_key );
+                // hook
+                $api_key = apply_filters( 'facetwp_gmaps_api_key', $api_key );
+
+                FWP()->display->assets['gmaps'] = '//maps.googleapis.com/maps/api/js?libraries=places&key=' . trim( esc_attr( $api_key ) ) . '&callback=Function.prototype';
+
+            } else {
+
+                add_filter( 'facetwp_load_gmaps', '__return_true', 5 );
+
+            }
         }
 
         // Pass extra options into Places Autocomplete
         $options = apply_filters( 'facetwp_proximity_autocomplete_options', [] );
+
+        if ( 'place-class' == $this->get_places_version() ) {
+
+            // Backward compatibility with documented legacy Places API options that don't exist in Places (New) Autocomplete
+            if ( isset( $options['componentRestrictions'] ) ) {
+                if ( isset( $options['componentRestrictions']['country'] ) ) {
+                    $options['includedRegionCodes'] = $options['componentRestrictions']['country'];
+                }
+                unset( $options['componentRestrictions'] );
+            }
+            if ( isset( $options['types'] ) ) {
+                $options['includedPrimaryTypes'] = $options['types'];
+                unset( $options['types'] );
+            }
+            if ( isset( $options['bounds'] ) ) {
+                $options['locationBias'] = $options['bounds'];
+                unset( $options['bounds'] );
+            }
+
+        }
+
+
         FWP()->display->json['proximity']['autocomplete_options'] = $options;
         FWP()->display->json['proximity']['clearText'] = __( 'Clear location', 'fwp-front' );
         FWP()->display->json['proximity']['queryDelay'] = 250;
@@ -248,7 +311,7 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
             $latlng = $params['facet_value'];
 
             // Only handle "lat, lng" strings
-            if ( ! empty( $latlng ) && is_string( $latlng ) ) {
+            if ( is_string( $latlng ) ) {
                 $latlng = preg_replace( '/[^0-9.,-]/', '', $latlng );
 
                 if ( ! empty( $facet['source_other'] ) ) {
@@ -256,7 +319,7 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
                     $other_params['facet_source'] = $facet['source_other'];
                     $rows = $class->get_row_data( $other_params );
 
-                    if ( ! empty( $rows ) && false === strpos( $latlng, ',' ) ) {
+                    if ( false === strpos( $latlng, ',' ) && ! empty( $rows ) ) {
                         $lng = $rows[0]['facet_display_value'];
                         $lng = preg_replace( '/[^0-9.,-]/', '', $lng );
                         $latlng .= ',' . $lng;
@@ -267,6 +330,15 @@ class FacetWP_Facet_Proximity_Core extends FacetWP_Facet
                     $latlng = explode( ',', $latlng );
                     $params['facet_value'] = $latlng[0];
                     $params['facet_display_value'] = $latlng[1];
+                }
+
+                /** make sure lat and lng are valid floats **/
+                $params['facet_value'] = $params['facet_value'] == (float)$params['facet_value'] ? (float)$params['facet_value'] : '';
+                $params['facet_display_value'] = $params['facet_display_value'] == (float)$params['facet_display_value'] ? (float)$params['facet_display_value'] : '';
+    
+                /** check for valid range of lat and lng */
+                if  ( '' == $params['facet_value'] || '' == $params['facet_display_value'] || 90 < abs( $params['facet_value'] ) || 180 < abs( $params['facet_display_value'] ) ) {
+                    $params['facet_value'] = ''; // don't index
                 }
             }
         }

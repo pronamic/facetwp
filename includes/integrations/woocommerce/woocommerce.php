@@ -15,6 +15,7 @@ class FacetWP_Integration_WooCommerce
         add_filter( 'facetwp_facet_sources', [ $this, 'facet_sources' ] );
         add_filter( 'facetwp_facet_display_value', [ $this, 'translate_hardcoded_choices' ], 10, 2 );
         add_filter( 'facetwp_indexer_post_facet', [ $this, 'index_woo_values' ], 10, 2 );
+        add_filter( 'facetwp_facet_sources', [ $this, 'exclude_data_sources' ] );
 
         // Support WooCommerce product variations
         $is_enabled = ( 'yes' === FWP()->helper->get_setting( 'wc_enable_variations', 'no' ) );
@@ -42,6 +43,10 @@ class FacetWP_Integration_WooCommerce
         if ( apply_filters( 'facetwp_woocommerce_support_categories_display', false ) ) {
             include( FACETWP_DIR . '/includes/integrations/woocommerce/taxonomy.php' );
         }
+
+        // Prevent WooCommerce breadcrumb from showing "Page X" on page 1 and higher when there are facet selections or pre-selected facets
+        add_filter( 'woocommerce_get_breadcrumb', [ $this, 'prevent_wc_breadcrumb_paged' ], 9999, 2 );
+
     }
 
 
@@ -132,9 +137,6 @@ class FacetWP_Integration_WooCommerce
         else {
             $pt = (array) $args['post_type'];
 
-            if ( in_array( 'any', $pt ) ) {
-                $pt = get_post_types();
-            }
             if ( in_array( 'product', $pt ) ) {
                 $pt[] = 'product_variation';
             }
@@ -166,7 +168,17 @@ class FacetWP_Integration_WooCommerce
 
                 if ( false !== $term ) {
                     $params['term_id'] = $term->term_id;
+                    $params['parent_id'] = $term->parent;
                     $params['facet_display_value'] = $term->name;
+
+                    $params['depth'] = count( get_ancestors( $term->term_id, $taxonomy, 'taxonomy' ) );
+
+                    $facet = FWP()->helper->get_facet_by_name( $params['facet_name'] );
+
+                    // handle parent_term setting
+                    if ( isset( $facet['parent_term'] ) && 0 < $facet['parent_term'] && !term_is_ancestor_of( $facet['parent_term'], $params['term_id'], $taxonomy ) ) {
+                        $params['facet_value'] = ''; // don't index
+                    }
                 }
             }
         }
@@ -485,6 +497,16 @@ class FacetWP_Integration_WooCommerce
 
 
     /**
+     * Exclude specific WC custom fields
+     * @since 4.2.3
+     */
+    function exclude_data_sources( $sources ) {
+        unset( $sources['custom_fields']['choices']['cf/_product_attributes'] );
+        return $sources;
+    }
+
+
+    /**
      * Allow certain hard-coded choices to be translated dynamically
      * instead of stored as translated in the index table
      * @since 3.9.6
@@ -493,7 +515,15 @@ class FacetWP_Integration_WooCommerce
         $source = $params['facet']['source'];
 
         if ( 'woo/stock_status' == $source ) {
-            $label = ( 'In Stock' == $label ) ? __( 'In Stock', 'fwp-front' ) : __( 'Out of Stock', 'fwp-front' );
+
+            // We aren't using a ternary here in case the user
+            // assigned a custom stock status label
+            if ( 'In Stock' == $label ) {
+                $label = __( 'In Stock', 'fwp-front' );
+            }
+            elseif ( 'Out of Stock' == $label ) {
+                $label = __( 'Out of Stock', 'fwp-front' );
+            }
         }
         elseif ( 'woo/on_sale' == $source ) {
             $label = __( 'On Sale', 'fwp-front' );
@@ -562,6 +592,23 @@ class FacetWP_Integration_WooCommerce
         $sort = FWP()->helper->get_setting( 'prefix' ) . 'sort';
         return isset( $_GET[ $sort ] ) ? 'menu_order' : $orderby;
     }
+
+
+    /**
+     * Prevent WooCommerce breadcrumb from showing "Page X" on page 1 and higher when there are facet selections or pre-selected facets
+     * @since 4.3.6
+     */
+    function prevent_wc_breadcrumb_paged( $crumbs, $breadcrumb ) {
+
+        if ( function_exists( 'FWP' ) && !empty( FWP()->request->url_vars )  ) {
+            if ( get_query_var( 'paged' ) >= 1 && 'subcategories' !== woocommerce_get_loop_display_mode() ) {
+                array_pop( $crumbs );
+            }
+        }
+
+        return $crumbs;
+    }
+
 }
 
 

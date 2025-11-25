@@ -15,6 +15,7 @@ class FacetWP_Integration_SearchWP
         add_filter( 'posts_results', [ $this, 'posts_results' ], 10, 2 );
         add_filter( 'facetwp_facet_filter_posts', [ $this, 'search_facet' ], 10, 2 );
         add_filter( 'facetwp_facet_search_engines', [ $this, 'search_engines' ] );
+        add_filter( 'searchwp\native\short_circuit', [ $this, 'short_circuit' ], 100, 2 );
     }
 
 
@@ -22,9 +23,9 @@ class FacetWP_Integration_SearchWP
      * Run and cache the \SWP_Query
      */
     function is_main_query( $is_main_query, $query ) {
-        if ( $is_main_query && $query->is_search() && ! empty( $query->get( 's' ) ) ) {
-            $args = $this->get_valid_args( $query );
-            $this->keywords = $query->get( 's' );
+        if ( $is_main_query && $query->is_main_query() && $query->is_search() ) {
+            $args = stripslashes_deep( $this->get_valid_args( $query ) );
+            $this->keywords = $args['s'];
             $this->swp_query = $this->run_query( $args );
             $query->set( 'using_searchwp', true );
             $query->set( 'searchwp', false );
@@ -36,7 +37,7 @@ class FacetWP_Integration_SearchWP
 
     /**
      * Whitelist supported SWP_Query arguments
-     * 
+     *
      * @link https://searchwp.com/documentation/classes/swp_query/#arguments
      */
     function get_valid_args( $query ) {
@@ -49,7 +50,7 @@ class FacetWP_Integration_SearchWP
 
         foreach ( $valid as $arg ) {
             $val = $query->get( $arg );
-            if ( ! empty( $val ) ) {
+            if ( ! empty( $val ) || 's' == $arg ) {
                 $output[ $arg ] = $val;
             }
         }
@@ -62,7 +63,7 @@ class FacetWP_Integration_SearchWP
      * Modify FacetWP's render() query to use SearchWP's results while bypassing
      * WP core search. We're using this additional query to support custom query
      * modifications, such as for FacetWP's sort box.
-     * 
+     *
      * The hook priority (1000) is important because this needs to run after
      * FacetWP_Request->update_query_vars()
      */
@@ -91,10 +92,10 @@ class FacetWP_Integration_SearchWP
     /**
      * If [facetwp => false] then it's the get_filtered_post_ids() query. Return
      * the raw SearchWP results to prevent the additional query.
-     * 
+     *
      * If [facetwp => true] and [first_run => true] then it's the main WP query. Return
      * a non-null value to kill the query, since we don't use the results.
-     * 
+     *
      * If [facetwp => true] and [first_run => false] then it's the FacetWP render() query.
      */
     function posts_pre_query( $posts, $query ) {
@@ -161,6 +162,11 @@ class FacetWP_Integration_SearchWP
                 $return = 'continue';
             }
             elseif ( ! empty( FWP()->unfiltered_post_ids ) ) {
+
+                if ( 'no' == $facet['enable_relevance'] ) {
+                    add_filter( 'facetwp_use_search_relevancy', '__return_false' );
+                }
+                
                 $swp_query = $this->run_query([
                     's' => $selected_values,
                     'engine' => substr( $engine, 4 ),
@@ -206,6 +212,24 @@ class FacetWP_Integration_SearchWP
         }
 
         return $engines;
+    }
+
+
+    /**
+     * Short-circuit SearchWP when "s" is empty and a search facet is in use
+     * @since 4.2.6
+     */
+    function short_circuit( $bool, $query ) {
+        if ( $query->is_search() && '' == $query->get( 's' ) ) {
+            $facets = FWP()->facet->facets ?? FWP()->ajax->url_vars;
+            foreach ( $facets AS $name => $value ) {
+                if ( FWP()->helper->facet_is( $name, 'type', 'search' ) ) {
+                    return true;
+                }
+            }
+        }
+
+        return $bool;
     }
 }
 

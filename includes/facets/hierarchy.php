@@ -5,7 +5,7 @@ class FacetWP_Facet_Hierarchy extends FacetWP_Facet
 
     function __construct() {
         $this->label = __( 'Hierarchy', 'fwp' );
-        $this->fields = [ 'label_any', 'modifiers', 'orderby', 'count' ];
+        $this->fields = [ 'label_any', 'modifiers', 'orderby', 'count', 'soft_limit' ];
     }
 
 
@@ -77,6 +77,8 @@ class FacetWP_Facet_Hierarchy extends FacetWP_Facet
             $output = array_reverse( $output );
         }
 
+        $limit = $this->get_limit( $facet );
+
         // Update the WHERE clause
         $where_clause .= " AND parent_id = '$facet_parent_id'";
 
@@ -89,7 +91,8 @@ class FacetWP_Facet_Hierarchy extends FacetWP_Facet
         FROM $from_clause
         WHERE f.facet_name = '{$facet['name']}' $where_clause
         GROUP BY f.facet_value
-        ORDER BY $orderby";
+        ORDER BY $orderby
+        LIMIT $limit";
 
         $results = $wpdb->get_results( $sql, ARRAY_A );
         $new_depth = empty( $output ) ? 0 : $output[ count( $output ) - 1 ]['depth'] + 1;
@@ -113,9 +116,9 @@ class FacetWP_Facet_Hierarchy extends FacetWP_Facet
         $selected_values = (array) $params['selected_values'];
 
         $output = '';
-        $num_visible = $this->get_limit( $facet );
-        $num = 0;
+        $soft_limit = empty( $facet['soft_limit'] ) ? 0 : (int) $facet['soft_limit'];
 
+        $num = 0;
         if ( ! empty( $values ) ) {
             foreach ( $values as $row ) {
                 $last_depth = $last_depth ?? $row['depth'];
@@ -132,7 +135,7 @@ class FacetWP_Facet_Hierarchy extends FacetWP_Facet
                     $output .= '<div class="facetwp-depth">';
                 }
 
-                if ( $num == $num_visible ) {
+                if ( 0 < $soft_limit && $num == $soft_limit ) {
                     $output .= '<div class="facetwp-overflow facetwp-hidden">';
                 }
 
@@ -155,10 +158,10 @@ class FacetWP_Facet_Hierarchy extends FacetWP_Facet
                 $last_depth = $row['depth'];
             }
 
-            if ( $num_visible < $num ) {
+            if ( 0 < $soft_limit && $soft_limit < $num ) {
                 $output .= '</div>';
-                $output .= '<a class="facetwp-toggle">' . __( 'See more', 'fwp-front' ) . '</a>';
-                $output .= '<a class="facetwp-toggle facetwp-hidden">' . __( 'See less', 'fwp-front' ) . '</a>';
+                $output .= '<a class="facetwp-toggle">' . facetwp_i18n( __( 'See {num} more', 'fwp-front' ) ) . '</a>';
+                $output .= '<a class="facetwp-toggle facetwp-hidden">' . facetwp_i18n( __( 'See less', 'fwp-front' ) ) . '</a>';
             }
 
             for ( $i = 0; $i <= $last_depth; $i++ ) {

@@ -81,7 +81,11 @@ class FacetWP_Facet_Slider extends FacetWP_Facet
             'format' => $facet['format'],
             'prefix' => facetwp_i18n( $facet['prefix'] ),
             'suffix' => facetwp_i18n( $facet['suffix'] ),
-            'step' => $facet['step']
+            'step' => $facet['step'],
+            'handle_attributes' => [
+                [ 'aria-label' => facetwp_i18n('lower') ],
+                [ 'aria-label' => facetwp_i18n('upper') ]
+            ]
         ];
     }
 

@@ -9,7 +9,7 @@
                 let $el = $(this);
                 if (! $el.hasClass('disabled')) {
                     $el.attr('role', 'checkbox');
-                    $el.attr('aria-checked', $el.hasClass('checked') ? 'true' : 'false');
+                    $el.attr('aria-checked', $el.hasClass('checked') || $el.hasClass('selected') ? 'true' : 'false');
                     $el.attr('aria-label', $el.text());
                     $el.attr('tabindex', 0);
                 }
@@ -41,8 +41,8 @@
                 $(this).attr('aria-label', $(this).find('option:selected').text());
             });
 
-            // search
-            $('.facetwp-search').each(function() {
+            // search, date, number range
+            $('.facetwp-search, .facetwp-date, .facetwp-number').each(function() {
                 $(this).attr('aria-label', $(this).attr('placeholder'));
             });
 
@@ -58,7 +58,10 @@
                 $(this).attr('role', 'button');
                 $(this).attr('aria-haspopup', 'true');
                 $(this).attr('aria-expanded', $(this).hasClass('fs-open') ? 'true' : 'false');
+                $(this).attr('aria-label', $(this).find('.fs-label').html());
             });
+
+            $('.facetwp-type-fselect .facetwp-dropdown').attr('aria-hidden', 'true');
 
             // pager
             $('.facetwp-pager').attr('role', 'navigation');

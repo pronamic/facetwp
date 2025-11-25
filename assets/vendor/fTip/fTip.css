@@ -9,6 +9,7 @@
     color: #fff;
     cursor: default;
     transition: height 0s, opacity 1s;
+    z-index: 100;
 }
 
 .ftip-wrap.active {

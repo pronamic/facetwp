@@ -58,6 +58,10 @@
     right: -10px;
     top: -4px;
 }
+.noUi-txt-dir-rtl.noUi-horizontal .noUi-handle {
+    left: -10px;
+    right: auto;
+}
 .noUi-target {
     background: #FAFAFA;
     border-radius: 4px;

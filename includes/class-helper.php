@@ -15,9 +15,6 @@ final class FacetWP_Helper
     /* (array) Cached terms */
     public $term_cache;
 
-    /* (array) Index table row counts */
-    public $row_counts;
-
 
     function __construct() {
         $this->facet_types = $this->get_facet_types();
@@ -47,7 +44,8 @@ final class FacetWP_Helper
 
 
     /**
-     * Get available facet types
+     * Get available facet types     * 
+     * @since 4.4 Added Map type facet
      */
     function get_facet_types() {
         if ( ! empty( $this->facet_types ) ) {
@@ -69,6 +67,7 @@ final class FacetWP_Helper
             'number_range'  => 'Facetwp_Facet_Number_Range',
             'rating'        => 'FacetWP_Facet_Rating',
             'proximity'     => 'Facetwp_Facet_Proximity_Core',
+            'map'           => 'Facetwp_Facet_Map',
             'pager'         => 'FacetWP_Facet_Pager',
             'reset'         => 'FacetWP_Facet_Reset',
             'sort'          => 'FacetWP_Facet_Sort'
@@ -138,6 +137,8 @@ final class FacetWP_Helper
 
                 // Valid facet type?
                 if ( in_array( $facet['type'], array_keys( $this->facet_types ) ) ) {
+                    $defaults = $this->facet_types[ $facet['type'] ]->field_defaults ?? [];
+                    $facet = array_merge( $defaults, $facet );
                     $tmp_facets[ $name ] = $facet;
                 }
             }
@@ -240,6 +241,25 @@ final class FacetWP_Helper
 
         foreach ( $this->get_facets() as $facet ) {
             if ( isset( $facet[ $setting ] ) && $value === $facet[ $setting ] ) {
+                $matches[] = $facet;
+            }
+        }
+
+        return $matches;
+    }
+
+
+    /**
+     * Fetch facets by data source type (prefix, ie tax, cf, acf ...)
+     * @param string $value
+     * @return array
+     * @since 4.4
+     */
+    function get_facets_by_datasource_type( $value ) {
+        $matches = [];
+
+        foreach ( $this->get_facets() as $facet ) {
+            if ( isset( $facet[ 'source' ] ) && false !== strpos( $facet['source'], $value ) ) {
                 $matches[] = $facet;
             }
         }
@@ -363,12 +383,36 @@ final class FacetWP_Helper
             }
         }
         else {
-            if ( $wpdb->dbh && $wpdb->use_mysqli ) {
+            // Use mysqli_real_escape_string if WP 6.4+ or $wpdb->use_mysqli is true
+            // The $wpdb->use_mysqli property was removed in WP 6.4
+            // Since the mysqli driver is now required
+            if ( ! isset( $wpdb->use_mysqli ) || ( $wpdb->dbh && $wpdb->use_mysqli ) ) {
                 $output = mysqli_real_escape_string( $wpdb->dbh, $input );
             }
             else {
                 $output = addslashes( $input );
             }
+        }
+
+        return $output;
+    }
+
+
+    /**
+     * Escape output data
+     * @return mixed the escaped value(s)
+     * @since 4.2.0
+     */
+    function escape( $input ) {
+        if ( is_array( $input ) ) {
+            $output = [];
+
+            foreach ( $input as $key => $val ) {
+                $output[ $key ] = $this->escape( $val );
+            }
+        }
+        else {
+            $output = htmlspecialchars( $input );
         }
 
         return $output;
@@ -466,14 +510,14 @@ final class FacetWP_Helper
                 '_edit_last',
                 '_edit_lock',
             ] );
-    
+
             // Get taxonomies
             $taxonomies = get_taxonomies( [], 'object' );
-    
+
             // Get custom fields
             $meta_keys = $wpdb->get_col( "SELECT DISTINCT meta_key FROM {$wpdb->postmeta} ORDER BY meta_key" );
             $custom_fields = array_diff( $meta_keys, $excluded_fields );
-    
+
             $sources = [
                 'posts' => [
                     'label' => __( 'Posts', 'fwp' ),
@@ -497,11 +541,11 @@ final class FacetWP_Helper
                     'weight' => 30
                 ]
             ];
-    
+
             foreach ( $taxonomies as $tax ) {
-                $sources['taxonomies']['choices'][ 'tax/' . $tax->name ] = $tax->labels->name;
+                $sources['taxonomies']['choices'][ 'tax/' . $tax->name ] = $tax->labels->name . ' (' . $tax->name . ')';
             }
-    
+
             foreach ( $custom_fields as $cf ) {
                 if ( 0 !== strpos( $cf, '_oembed_' ) ) {
                     $sources['custom_fields']['choices'][ 'cf/' . $cf ] = $cf;
@@ -540,10 +584,6 @@ final class FacetWP_Helper
      * @since 3.3.4
      */
     function get_row_counts() {
-        if ( isset( $this->row_counts ) ) {
-            return $this->row_counts;
-        }
-
         global $wpdb;
 
         $output = [];
@@ -553,11 +593,27 @@ final class FacetWP_Helper
             $output[ $result->facet_name ] = (int) $result->row_count;
         }
 
-        $this->row_counts = $output;
-
         return $output;
     }
 
+    /**
+     * Get indexable post types
+     */
+    function get_indexable_types() {
+
+        $args = FWP()->indexer->get_query_args();
+        $types = (array) ( $args['post_type'] ?? 'post' );
+        $statuses = (array) ( $args['post_status'] ?? 'publish' );
+
+        if ( ! in_array( 'inherit', $statuses ) && in_array( 'attachment', $types ) ) {
+            $types = array_values( array_diff( $types, [ 'attachment' ] ) );
+        }
+
+        sort( $types );
+
+        return $types;
+
+    }
 
     /**
      * Grab the license key

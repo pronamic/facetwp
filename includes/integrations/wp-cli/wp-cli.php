@@ -18,6 +18,8 @@ class FacetWP_Integration_WP_CLI
      * : Index specific facet names (comma-separated).
      */
     function index( $args, $assoc_args ) {
+        $index_all = true;
+
         if ( isset( $assoc_args['ids'] ) ) {
             if ( empty( $assoc_args['ids'] ) ) {
                 WP_CLI::error( 'IDs empty.' );
@@ -26,6 +28,7 @@ class FacetWP_Integration_WP_CLI
             $ids = preg_replace( '/\s+/', '', $assoc_args['ids'] );
             $ids = explode( ',', $ids );
             $post_ids = array_filter( $ids, 'ctype_digit' );
+            $index_all = false;
         }
         else {
             $post_ids = FWP()->indexer->get_post_ids_to_index();
@@ -45,16 +48,23 @@ class FacetWP_Integration_WP_CLI
                     $facets[] = $facet;
                 }
             }
+
+            $index_all = false;
         }
         else {
             $facets = FWP()->helper->get_facets();
         }
 
-        // cleanup
-        $assoc_args['pre_index'] = true;
-        $this->purge( $args, $assoc_args );
-
         $progress = WP_CLI\Utils\make_progress_bar( 'Indexing:', count( $post_ids ) );
+
+        // prep
+        if ( $index_all ) {
+            FWP()->indexer->manage_temp_table( 'create' );
+        }
+        else {
+            $assoc_args['pre_index'] = true;
+            $this->purge( $args, $assoc_args );
+        }
 
         // manually load value modifiers
         FWP()->indexer->load_value_modifiers( $facets );
@@ -63,6 +73,13 @@ class FacetWP_Integration_WP_CLI
         foreach ( $post_ids as $post_id ) {
             FWP()->indexer->index_post( $post_id, $facets );
             $progress->tick();
+        }
+
+        // cleanup
+        if ( $index_all ) {
+            update_option( 'facetwp_last_indexed', time(), 'no' );
+            FWP()->indexer->manage_temp_table( 'replace' );
+            FWP()->indexer->manage_temp_table( 'delete' );
         }
 
         $progress->finish();

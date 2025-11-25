@@ -1,4 +1,4 @@
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import multiEntry from '@rollup/plugin-multi-entry';
 import buble from '@rollup/plugin-buble';
 
@@ -25,7 +25,7 @@ export default [{
         format: 'iife'
     },
     plugins: [
-        buble()
+        buble( { transforms: { asyncAwait: false } } )
     ]
 },
 {

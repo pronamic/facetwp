@@ -10,6 +10,7 @@ class FacetWP_Overrides
         add_filter( 'facetwp_index_row', [ $this, 'index_row' ], 5, 2 );
         add_filter( 'facetwp_index_row', [ $this, 'format_numbers' ], 15, 2 );
         add_filter( 'facetwp_is_main_query', [ $this, 'ignore_post_types' ], 10, 2 );
+        add_filter( 'facetwp_indexer_is_enabled', [ $this, 'disable_indexer' ], 5 );
     }
 
 
@@ -36,7 +37,7 @@ class FacetWP_Overrides
             $other_params = $params;
             $other_params['facet_source'] = $facet['source_other'];
             $rows = $class->get_row_data( $other_params );
-            $params['facet_display_value'] = $rows[0]['facet_display_value'];
+            $params['facet_display_value'] = apply_filters( 'facetwp_index_source_other_value', $rows[0]['facet_display_value'] ?? $params['facet_display_value'], $params );
         }
 
         return $params;
@@ -100,4 +101,16 @@ class FacetWP_Overrides
 
         return $is_main_query;
     }
+    
+    /**
+    * Disable indexer
+    */
+   function disable_indexer($enabled) {
+
+       if ('no' == FWP()->helper->get_setting('enable_indexer', 'yes')) {
+           return false; // enable indexer setting
+       }
+
+       return $enabled;
+   }
 }

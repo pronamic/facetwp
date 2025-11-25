@@ -62,8 +62,14 @@ window.fUtil = (() => {
                 headers: settings.headers,
                 body: data
             })
-            .then(response => response[settings.dataType]())
-            .then(json => settings.done(json))
+            .then(resp => {
+                if (resp.ok) {
+                    return resp[settings.dataType]();
+                }
+
+                return settings.fail(resp.status + ' - ' + resp.statusText);
+            })
+            .then(result => settings.done(result))
             .catch(err => settings.fail(err));
         }
 

@@ -5,7 +5,7 @@ class FacetWP_Facet_Dropdown extends FacetWP_Facet
 
     function __construct() {
         $this->label = __( 'Dropdown', 'fwp' );
-        $this->fields = [ 'label_any', 'parent_term', 'modifiers', 'hierarchical', 'orderby', 'count' ];
+        $this->fields = [ 'label_any', 'parent_term', 'modifiers', 'hierarchical', 'ghosts', 'orderby', 'count' ];
     }
 
 
@@ -40,6 +40,7 @@ class FacetWP_Facet_Dropdown extends FacetWP_Facet
 
         foreach ( $values as $row ) {
             $selected = in_array( $row['facet_value'], $selected_values ) ? ' selected' : '';
+            $disabled = empty( $row['counter'] ) ? ' disabled' : '';
             $indent = $is_hierarchical ? str_repeat( '&nbsp;&nbsp;', (int) $row['depth'] ) : '';
 
             // Determine whether to show counts
@@ -56,7 +57,7 @@ class FacetWP_Facet_Dropdown extends FacetWP_Facet
                 $label .= ' (' . $row['counter'] . ')';
             }
 
-            $output .= '<option value="' . esc_attr( $row['facet_value'] ) . '"' . $selected . '>' . $indent . $label . '</option>';
+            $output .= '<option value="' . esc_attr( $row['facet_value'] ) . '"' . $selected . $disabled . '>' . $indent . $label . '</option>';
         }
 
         $output .= '</select>';

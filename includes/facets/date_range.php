@@ -15,18 +15,26 @@ class FacetWP_Facet_Date_Range extends FacetWP_Facet
     function render( $params ) {
 
         $output = '';
-        $value = $params['selected_values'];
-        $value = empty( $value ) ? [ '', '' ] : $value;
+        $value = (array) $params['selected_values'];
         $fields = empty( $params['facet']['fields'] ) ? 'both' : $params['facet']['fields'];
 
+        $text_date = facetwp_i18n( __( 'Date', 'fwp-front' ) );
+        $text_start_date = facetwp_i18n( __( 'Start date', 'fwp-front' ) );
+        $text_end_date = facetwp_i18n( __( 'End date', 'fwp-front' ) );
+
+        $text_date_empty = facetwp_i18n( __( 'No dates', 'fwp-front' ) );
+        $text_start_date_empty = facetwp_i18n( __( 'No start dates', 'fwp-front' ) );
+        $text_end_date_empty = facetwp_i18n( __( 'No end dates', 'fwp-front' ) );
+
+
         if ( 'exact' == $fields ) {
-            $output .= '<input type="text" class="facetwp-date facetwp-date-min" value="' . esc_attr( $value[0] ) . '" placeholder="' . __( 'Date', 'fwp-front' ) . '" />';
+            $output .= '<input type="text" class="facetwp-date facetwp-date-min" data-empty="' . esc_attr( $text_date_empty ) . '" value="' . esc_attr( $value[0] ?? '' ) . '" placeholder="' . esc_attr( $text_date ) . '" />';
         }
         if ( 'both' == $fields || 'start_date' == $fields ) {
-            $output .= '<input type="text" class="facetwp-date facetwp-date-min" value="' . esc_attr( $value[0] ) . '" placeholder="' . __( 'Start Date', 'fwp-front' ) . '" />';
+            $output .= '<input type="text" class="facetwp-date facetwp-date-min" data-empty="' . esc_attr( $text_start_date_empty ) . '" value="' . esc_attr( $value[0] ?? '' ) . '" placeholder="' . esc_attr( $text_start_date ) . '" />';
         }
         if ( 'both' == $fields || 'end_date' == $fields ) {
-            $output .= '<input type="text" class="facetwp-date facetwp-date-max" value="' . esc_attr( $value[1] ) . '" placeholder="' . __( 'End Date', 'fwp-front' ) . '" />';
+            $output .= '<input type="text" class="facetwp-date facetwp-date-max" data-empty="' . esc_attr( $text_end_date_empty ) . '" value="' . esc_attr( $value[1] ?? '' ) . '" placeholder="' . esc_attr( $text_end_date ) . '" />';
         }
 
         return $output;
@@ -53,6 +61,16 @@ class FacetWP_Facet_Date_Range extends FacetWP_Facet
         if ( $is_dual && 'basic' != $compare_type ) {
             if ( 'exact' == $fields ) {
                 $max = $min;
+            }
+
+            /**
+             * Enclose type defaults
+             * default min or max to 
+             * opposite value
+             **/
+            if ( 'enclose' == $compare_type ) {
+                $min = ( false !== $min ) ? $min : $max;
+                $max = ( false !== $max ) ? $max : $min;
             }
 
             $min = ( false !== $min ) ? $min : '0000-00-00';
@@ -159,8 +177,8 @@ class FacetWP_Facet_Date_Range extends FacetWP_Facet
         WHERE facet_name = '{$facet['name']}' AND facet_display_value != '' $where_clause";
         $row = $wpdb->get_row( $sql );
 
-        $min = substr( $row->minDate, 0, 10 );
-        $max = substr( $row->maxDate, 0, 10 );
+        $min = substr( $row->minDate ?? '', 0, 10 );
+        $max = substr( $row->maxDate ?? '', 0, 10 );
 
         if ( 'both' == $fields ) {
             $min_upper = ! empty( $selected_values[1] ) ? $selected_values[1] : $max;

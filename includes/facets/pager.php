@@ -9,8 +9,9 @@ class FacetWP_Facet_Pager extends FacetWP_Facet
     function __construct() {
         $this->label = __( 'Pager', 'fwp' );
         $this->fields = [ 'pager_type', 'inner_size', 'dots_label', 'prev_label', 'next_label',
-            'count_text_plural', 'count_text_singular', 'count_text_none', 'load_more_text',
-            'loading_text', 'default_label', 'per_page_options' ];
+            'count_text_plural', 'count_text_singular', 'count_text_none', 'scroll_target', 'scroll_offset',
+            'load_more_text', 'loading_text', 'default_label', 'per_page_options'
+        ];
     }
 
 
@@ -109,6 +110,7 @@ class FacetWP_Facet_Pager extends FacetWP_Facet
         $page = $this->pager_args['page'];
         $per_page = $this->pager_args['per_page'];
         $total_rows = $this->pager_args['total_rows'];
+        $total_rows_unfiltered = $this->pager_args['total_rows_unfiltered'];
         $total_pages = $this->pager_args['total_pages'];
 
         if ( -1 == $per_page ) {
@@ -129,6 +131,7 @@ class FacetWP_Facet_Pager extends FacetWP_Facet
             $output = str_replace( '[lower]', $lower, $output );
             $output = str_replace( '[upper]', $upper, $output );
             $output = str_replace( '[total]', $total_rows, $output );
+            $output = str_replace( '[total_unfiltered]', $total_rows_unfiltered, $output );
             $output = str_replace( '[page]', $page, $output );
             $output = str_replace( '[per_page]', $per_page, $output );
             $output = str_replace( '[total_pages]', $total_pages, $output );
@@ -192,10 +195,14 @@ class FacetWP_Facet_Pager extends FacetWP_Facet
      */
     function settings_js( $params ) {
         $facet = $params['facet'];
+        $settings[ 'pager_type' ] =  $facet['pager_type'];
 
-        return [
-            'pager_type' => $facet['pager_type']
-        ];
+        if ( 'numbers' == $facet['pager_type'] ) {
+            $settings[ 'scroll_target' ] =  $facet['scroll_target'] ?? '';
+            $settings[ 'scroll_offset' ] =  (int) ( $facet['scroll_offset'] ?? '' );
+        }
+
+        return $settings;
     }
 
 
@@ -234,6 +241,19 @@ class FacetWP_Facet_Pager extends FacetWP_Facet
                 'notes' => 'Leave blank to hide',
                 'default' => 'Next »',
                 'show' => "facet.pager_type == 'numbers'"
+            ],
+            'scroll_target' => [
+                'label' => __( 'Scroll target', 'fwp' ),
+                'notes' => 'Add a class or ID to target for scroll up on paging.  Use "body" for top of page or ".facetwp-template" for top of results.  Leave blank for no scrolling.',
+                'default' => '',
+                'placeholder' => 'e.g. .facetwp-template',
+                'show' => "facet.pager_type == 'numbers'"
+            ],
+            'scroll_offset' => [
+                'label' => __( 'Scroll offset', 'fwp' ),
+                'notes' => 'Number of px to modify scroll target position, for example 100 will be 100px below target, -100 will be 100px above target',
+                'default' => '',
+                'show' => "facet.scroll_target != '' && facet.pager_type == 'numbers'"
             ],
             'count_text_plural' => [
                 'label' => __( 'Count text (plural)', 'fwp' ),

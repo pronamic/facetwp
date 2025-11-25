@@ -18,6 +18,12 @@ class FacetWP_Request
     /* (boolean) Initial load? */
     public $is_preload = false;
 
+    /* (string) Name of active FacetWP template */
+    public $template_name;
+
+    /* (array) Response output */
+    public $output;
+
 
     function __construct() {
         $this->process_json();
@@ -32,7 +38,9 @@ class FacetWP_Request
         $json = file_get_contents( 'php://input' );
         if ( 0 === strpos( $json, '{' ) ) {
             $post_data = json_decode( $json, true );
-            if ( isset( $post_data['action'] ) && 0 === strpos( $post_data['action'], 'facetwp' ) ) {
+            $action = $post_data['action'] ?? '';
+
+            if ( is_string( $action ) && 0 === strpos( $action, 'facetwp' ) ) {
                 $_POST = $post_data;
             }
         }
@@ -123,8 +131,9 @@ class FacetWP_Request
                 $query_vars['paged'] = 1;
             }
 
-            // Only intercept the identical query
-            if ( $query_vars === $this->query_vars ) {
+            // Only intercept the same query
+            // We're using "==", which doesn't care if assoc order is different
+            if ( $query_vars == $this->query_vars ) {
                 $posts = FWP()->facet->query->posts;
                 $query->found_posts = FWP()->facet->query->found_posts;
                 $query->max_num_pages = FWP()->facet->query->max_num_pages;
@@ -198,10 +207,17 @@ class FacetWP_Request
      * Is this the main query?
      */
     function is_main_query( $query ) {
-        $is_main_query = ( $query->is_main_query() || $query->is_archive );
+        if ( 'yes' == FWP()->helper->get_setting( 'strict_query_detection', 'no' ) ) {
+            $is_main_query = ( $query->is_main_query() );
+        }
+        else {
+            $is_main_query = ( $query->is_main_query() || $query->is_archive );
+        }
+
         $is_main_query = ( $query->is_singular || $query->is_feed ) ? false : $is_main_query;
         $is_main_query = ( $query->get( 'suppress_filters', false ) ) ? false : $is_main_query; // skip get_posts()
         $is_main_query = ( '' !== $query->get( 'facetwp' ) ) ? (bool) $query->get( 'facetwp' ) : $is_main_query; // flag
+        $is_main_query = ( doing_filter( 'get_the_excerpt' ) ) ? false : $is_main_query; // skip for excerpts
         return apply_filters( 'facetwp_is_main_query', $is_main_query, $query );
     }
 
@@ -241,10 +257,10 @@ class FacetWP_Request
 
     /**
      * On initial pageload, preload the data
-     * 
+     *
      * This gets called twice; once in the template shortcode (to grab only the template)
      * and again in FWP()->display->front_scripts() to grab everything else.
-     * 
+     *
      * Two calls are needed for timing purposes; the template shortcode often renders
      * before some or all of the other FacetWP-related shortcodes.
      */
@@ -306,10 +322,10 @@ class FacetWP_Request
     /**
      * This gets called from FWP()->display->front_scripts(), when we finally
      * know which shortcodes are on the page.
-     * 
+     *
      * Since we already got the template HTML on the first process_preload_data() call,
      * this time we're grabbing everything but the template.
-     * 
+     *
      * The return value of this method gets passed into the 2nd argument of
      * process_preload_data().
      */

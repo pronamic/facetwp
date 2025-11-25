@@ -21,9 +21,15 @@ class FacetWP_Indexer
     /* (array) Value modifiers set via the admin UI */
     public $modifiers;
 
+    /* (bool) Whether indexing hooks are in use */
+    public $is_overridden;
+
 
     function __construct() {
-        $this->set_table_prop();
+        $this->set_table( 'auto' );
+
+        add_action( 'facetwp_indexer_cron', [ $this, 'get_progress' ] );
+
         $this->run_cron();
 
         if ( apply_filters( 'facetwp_indexer_is_enabled', true ) ) {
@@ -42,7 +48,6 @@ class FacetWP_Indexer
         add_action( 'edited_term',              [ $this, 'edit_term' ], 10, 3 );
         add_action( 'delete_term',              [ $this, 'delete_term' ], 10, 3 );
         add_action( 'set_object_terms',         [ $this, 'set_object_terms' ] );
-        add_action( 'facetwp_indexer_cron',     [ $this, 'get_progress' ] );
         add_filter( 'wp_insert_post_parent',    [ $this, 'is_wp_insert_post' ] );
     }
 
@@ -72,6 +77,11 @@ class FacetWP_Indexer
         }
 
         if ( 'auto-draft' == get_post_status( $post_id ) ) {
+            return;
+        }
+        
+        // late check to disable indexing after __construct is already loaded
+        if ( !apply_filters( 'facetwp_indexer_is_enabled', true ) ) {
             return;
         }
 
@@ -153,7 +163,8 @@ class FacetWP_Indexer
      * @since 0.8.0
      */
     function set_object_terms( $object_id ) {
-        if ( ! $this->is_saving ) {
+        // late check to disable indexing after __construct is already loaded
+        if ( ! $this->is_saving && apply_filters( 'facetwp_indexer_is_enabled', true )  ) {
             $this->index( $object_id );
         }
     }
@@ -208,8 +219,8 @@ class FacetWP_Indexer
         }
 
         // Resume indexing?
-        $offset = (int) ( $_POST['offset'] ?? 0 );
-        $attempt = (int) ( $_POST['retries'] ?? 0 );
+        $offset = (int) ( $_POST['facetwp_offset'] ?? 0 );
+        $attempt = (int) ( $_POST['facetwp_retries'] ?? 0 );
 
         if ( 0 < $offset ) {
             $post_ids = json_decode( get_option( 'facetwp_indexing' ), true );
@@ -220,7 +231,6 @@ class FacetWP_Indexer
             // Store post IDs
             if ( $this->index_all ) {
                 update_option( 'facetwp_indexing', json_encode( $post_ids ) );
-                $this->set_table_prop();
             }
         }
 
@@ -254,7 +264,7 @@ class FacetWP_Indexer
                     wp_cache_delete( 'facetwp_indexing_cancelled', 'options' );
 
                     if ( 'yes' === get_option( 'facetwp_indexing_cancelled', 'no' ) ) {
-                        update_option( 'facetwp_transients', '' );
+                        update_option( 'facetwp_indexing_data', '' );
                         update_option( 'facetwp_indexing', '' );
                         $this->manage_temp_table( 'delete' );
                         exit;
@@ -266,7 +276,7 @@ class FacetWP_Indexer
                         'retries'       => $attempt,
                         'touch'         => time(),
                     ];
-                    update_option( 'facetwp_transients', json_encode( $transients ) );
+                    update_option( 'facetwp_indexing_data', json_encode( $transients ) );
                 }
             }
 
@@ -281,15 +291,44 @@ class FacetWP_Indexer
         // Indexing complete
         if ( $this->index_all ) {
             update_option( 'facetwp_last_indexed', time(), 'no' );
-            update_option( 'facetwp_transients', '', 'no' );
+            update_option( 'facetwp_indexing_data', '', 'no' );
             update_option( 'facetwp_indexing', '', 'no' );
 
             $this->manage_temp_table( 'replace' );
             $this->manage_temp_table( 'delete' );
-            $this->set_table_prop();
         }
 
         do_action( 'facetwp_indexer_complete' );
+    }
+
+
+    /**
+     * Get the array of indexer query args
+     * @since 4.1.8
+     */
+    function get_query_args( $post_id = false ) {
+        $post_types = get_post_types( [
+            'exclude_from_search' => false
+        ] );
+
+        $args = [
+            'post_type'         => $post_types,
+            'post_status'       => 'publish',
+            'posts_per_page'    => -1,
+            'fields'            => 'ids',
+            'orderby'           => 'ID',
+            'cache_results'     => false,
+            'no_found_rows'     => true,
+            'ignore_custom_sort' => true,
+            'suppress_filters'	=> true
+        ];
+
+        if ( is_int( $post_id ) ) {
+            $args['p'] = $post_id;
+            $args['posts_per_page'] = 1;
+        }
+
+        return apply_filters( 'facetwp_indexer_query_args', $args );
     }
 
 
@@ -298,23 +337,7 @@ class FacetWP_Indexer
      * @since 3.6.8
      */
     function get_post_ids_to_index( $post_id = false ) {
-        $args = [
-            'post_type'         => 'any',
-            'post_status'       => 'publish',
-            'posts_per_page'    => -1,
-            'fields'            => 'ids',
-            'orderby'           => 'ID',
-            'cache_results'     => false,
-            'no_found_rows'     => true,
-        ];
-
-        if ( is_int( $post_id ) ) {
-            $args['p'] = $post_id;
-            $args['posts_per_page'] = 1;
-        }
-
-        $args = apply_filters( 'facetwp_indexer_query_args', $args );
-
+        $args = $this->get_query_args( $post_id );
         $query = new WP_Query( $args );
         return (array) $query->posts;
     }
@@ -580,8 +603,8 @@ class FacetWP_Indexer
                     'timeout'   => 0.02,
                     'body'      => [
                         'action'    => 'facetwp_resume_index',
-                        'offset'    => $num_indexed,
-                        'retries'   => $retries + 1,
+                        'facetwp_offset'    => $num_indexed,
+                        'facetwp_retries'   => $retries + 1,
                         'touch'     => $touch
                     ]
                 ];
@@ -603,7 +626,7 @@ class FacetWP_Indexer
      * @since 1.7.8
      */
     function get_transient( $name = false ) {
-        $transients = get_option( 'facetwp_transients' );
+        $transients = get_option( 'facetwp_indexing_data' );
 
         if ( ! empty( $transients ) ) {
             $transients = json_decode( $transients, true );
@@ -619,13 +642,17 @@ class FacetWP_Indexer
 
 
     /**
-     * Determine whether a temp index table is in use
-     * @since 3.5
+     * Set either the index or temp table
+     * @param string $table 'auto', 'index', or 'temp'
+     * @since 4.1.4
      */
-    function set_table_prop() {
+    function set_table( $table = 'auto' ) {
         global $wpdb;
 
-        $table = ( '' == get_option( 'facetwp_indexing', '' ) ) ? 'index' : 'temp';
+        if ( 'auto' == $table ) {
+            $table = ( '' == get_option( 'facetwp_indexing', '' ) ) ? 'index' : 'temp';
+        }
+
         $this->table = $wpdb->prefix . 'facetwp_' . $table;
     }
 
@@ -642,6 +669,7 @@ class FacetWP_Indexer
 
         if ( 'create' == $action ) {
             $wpdb->query( "CREATE TABLE $temp_table LIKE $table" );
+            $this->set_table( 'temp' );
         }
         elseif ( 'replace' == $action ) {
             $wpdb->query( "TRUNCATE TABLE $table" );
@@ -649,6 +677,7 @@ class FacetWP_Indexer
         }
         elseif ( 'delete' == $action ) {
             $wpdb->query( "DROP TABLE IF EXISTS $temp_table" );
+            $this->set_table( 'index' );
         }
     }
 
@@ -671,6 +700,9 @@ class FacetWP_Indexer
                 // Compare using both original and encoded values
                 foreach ( $temp as $val ) {
                     $val = trim( $val );
+                    if ( empty( $val ) ) {
+                        continue;
+                    }
                     $val_encoded = htmlentities( $val );
                     $val_decoded = html_entity_decode( $val );
                     $values[ $val ] = true;
@@ -678,7 +710,9 @@ class FacetWP_Indexer
                     $values[ $val_decoded ] = true;
                 }
 
-                $output[ $name ] = [ 'type' => $type, 'values' => array_keys( $values ) ];
+                if ( ! empty( $values) ) {
+                    $output[ $name ] = [ 'type' => $type, 'values' => array_keys( $values ) ];
+                }
             }
         }
 

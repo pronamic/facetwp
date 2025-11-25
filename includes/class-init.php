@@ -5,6 +5,7 @@ class FacetWP_Init
 
     function __construct() {
         add_action( 'init', [ $this, 'init' ], 20 );
+        add_action( 'admin_notices', [ $this, 'admin_notices' ] );
         add_filter( 'woocommerce_is_rest_api_request', [ $this, 'is_rest_api_request' ] );
     }
 
@@ -93,7 +94,72 @@ class FacetWP_Init
      * Register the FacetWP settings page
      */
     function admin_menu() {
-        add_options_page( 'FacetWP', 'FacetWP', 'manage_options', 'facetwp', [ $this, 'settings_page' ] );
+        add_options_page( 'FacetWP', 'FacetWP', apply_filters( 'facetwp_admin_settings_capability', 'manage_options' ), 'facetwp', [ $this, 'settings_page' ] );
+    }
+
+
+    /**
+     * Notify users to install necessary integrations
+     */
+    function admin_notices() {
+        if ( apply_filters( 'facetwp_dismiss_notices', false ) ) {
+            return;
+        }
+
+        $reqs = [
+            'Beaver Builder' => [
+                'is_active' => class_exists( 'FLBuilderLoader' ),
+                'addon' => 'facetwp-beaver-builder/facetwp-beaver-builder.php',
+                'slug' => 'beaver-builder'
+            ],
+            'Bricks' => [
+                'is_active' => function_exists( 'bricks_is_builder' ),
+                'addon' => 'facetwp-bricks/facetwp-bricks.php',
+                'slug' => 'bricks'
+            ],
+            'Elementor' => [
+                'is_active' => defined( 'ELEMENTOR_VERSION' ),
+                'addon' => 'facetwp-elementor/facetwp-elementor.php',
+                'slug' => 'elementor'
+            ],
+            'Multilingual (Polylang)' => [
+                'is_active' => function_exists( 'pll_register_string' ),
+                'addon' => 'facetwp-i18n/facetwp-i18n.php',
+                'slug' => 'multilingual'
+            ],
+            'Relevanssi' => [
+                'is_active' => function_exists( 'relevanssi_search' ),
+                'addon' => 'facetwp-relevanssi/facetwp-relevanssi.php',
+                'slug' => 'relevanssi'
+            ],
+            'Recipes (Tasty Recipes)' => [
+                'is_active' => function_exists( 'Tasty_Recipes' ),
+                'addon' => 'facetwp-recipes/facetwp-recipes.php',
+                'slug' => 'recipes'
+            ],
+            'Multilingual (WPML)' => [
+                'is_active' => defined( 'ICL_SITEPRESS_VERSION' ),
+                'addon' => 'facetwp-i18n/facetwp-i18n.php',
+                'slug' => 'multilingual'
+            ],
+            'Recipes (WP Recipe Maker)' => [
+                'is_active' => function_exists( 'run_wp_recipe_maker' ),
+                'addon' => 'facetwp-recipes/facetwp-recipes.php',
+                'slug' => 'recipes'
+            ]
+        ];
+
+        $needed = [];
+
+        foreach ( $reqs as $name => $req ) {
+            if ( $req['is_active'] && ! is_plugin_active( $req['addon'] ) ) {
+                $needed[] = sprintf( '<a href="https://facetwp.com/help-center/using-facetwp-with/%s/" target="_blank">%s</a>', $req['slug'], $name );
+            }
+        }
+
+        if ( ! empty( $needed ) ) {
+            echo '<div class="error"><p>Please install these FacetWP integration add-ons (then re-index): ' . implode( ', ', $needed ) . '</p></div>';
+        }
     }
 
 
@@ -141,9 +207,9 @@ class FacetWP_Init
      * WooCommerce 3.6+ doesn't load its frontend includes for REST API requests
      * We need to force-load these includes for FacetWP refreshes
      * See includes() within class-woocommerce.php
-     * 
+     *
      * This code isn't within /integrations/woocommerce/ because it runs *before* init
-     * 
+     *
      * @since 3.3.10
      */
     function is_rest_api_request( $request ) {

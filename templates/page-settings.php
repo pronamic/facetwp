@@ -101,13 +101,12 @@ FWP.data.settings = FWP.hooks.applyFilters('facetwp/load_settings', FWP.data.set
 
 <div id="app">
     <div class="facetwp-header">
-        <span class="facetwp-logo" title="FacetWP">&nbsp;</span>
-        <span class="facetwp-version">v<?php echo FACETWP_VERSION; ?></span>
-
+      <a href="https://facetwp.com/help-center/" target="_blank" class="facetwp-logo" title="FacetWP Help Center">&nbsp;</a>
+      <a href="https://facetwp.com/help-center/changelog/" target="_blank" class="facetwp-version" title="FacetWP Changelog">v<?php echo FACETWP_VERSION; ?></a>
         <span class="facetwp-header-nav">
             <a class="facetwp-tab" :class="{ active: active_tab == 'facets' }" @click="tabClick('facets')"><?php _e( 'Facets', 'fwp' ); ?></a><!--
             --><a class="facetwp-tab" :class="{ active: active_tab == 'templates' }" @click="tabClick('templates')"><?php _e( 'Listings', 'fwp' ); ?></a><!--
-            --><a class="facetwp-tab" :class="{ active: active_tab == 'settings' }" @click="tabClick('settings')"><?php _e( 'Settings', 'fwp' ); ?></a><!--
+            --><a class="facetwp-tab" :class="{ active: active_tab == 'settings' }" @click="tabClick('settings')"><?php _e( 'Settings', 'fwp' ); ?><span class="facetwp-settings-icon" :class="{ active: app.settings.debug_mode == 'on' }"></span></a><!--
             --><a class="facetwp-tab" :class="{ active: active_tab == 'support' }" @click="tabClick('support')"><?php _e( 'Support', 'fwp' ); ?></a>
         </span>
 
@@ -208,7 +207,7 @@ FWP.data.settings = FWP.hooks.applyFilters('facetwp/load_settings', FWP.data.set
             <?php foreach ( $settings as $key => $tab ) : ?>
             <div class="facetwp-settings-section" :class="{ active: active_subnav == '<?php echo $key; ?>' }">
                 <?php foreach ( $tab['fields'] as $field_data ) : ?>
-                <div class="facetwp-row">
+                <div class="facetwp-row"<?php if ( !empty($field_data['show']) ) echo 'v-show=\'' . $field_data['show'] . '\''; ?>>
                     <div>
                         <?php if ( isset( $field_data['notes'] ) ) : ?>
                         <div class="facetwp-tooltip">

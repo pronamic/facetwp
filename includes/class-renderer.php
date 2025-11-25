@@ -12,6 +12,9 @@ class FacetWP_Renderer
     /* (array) WP_Query arguments */
     public $query_args;
 
+    /* (array) WP_Query args when "facetwp_template_use_archive" is enabled */
+    public $archive_args;
+
     /* (array) Data used to build the pager */
     public $pager_args;
 
@@ -35,6 +38,9 @@ class FacetWP_Renderer
 
     /* (array) The final WP_Query object */
     public $query;
+
+    /* (array) Convenience var */
+    public $facet_types;
 
 
     function __construct() {
@@ -78,6 +84,15 @@ class FacetWP_Renderer
 
                 // Default to "OR" mode
                 $facet['operator'] = $facet['operator'] ?? 'or';
+
+                // Fix operator for non-multiselect
+                $ui_type = empty( $facet['ui_type'] ) ? $facet['type'] : $facet['ui_type'];
+                if ( 'fselect' == $ui_type ) {
+                    $multi = $facet['multiple'] ?? 'no';
+                    $facet['operator'] = ( 'no' == $multi ) ? 'or' : $facet['operator'];
+                } else if ( in_array( $ui_type, [ 'radio', 'dropdown' ] ) ) {
+                    $facet['operator'] = 'or';
+                }
 
                 // Support the "facetwp_preload_url_vars" hook
                 if ( $first_load && empty( $f['selected_values'] ) && ! empty( $this->http_params['url_vars'][ $name ] ) ) {
@@ -132,7 +147,7 @@ class FacetWP_Renderer
 
             // Update the SQL query
             if ( ! empty( $post_ids ) ) {
-                if ( FWP()->is_filtered ) {
+                if ( FWP()->is_filtered || FWP()->is_modified ) {
                     $query_args['post__in'] = $post_ids;
                 }
 
@@ -159,6 +174,8 @@ class FacetWP_Renderer
         // Debug
         if ( 'on' == FWP()->helper->get_setting( 'debug_mode', 'off' ) ) {
             $output['settings']['debug'] = $this->get_debug_info();
+        } else {
+            $output['settings']['debug'] = "Enable debug mode in [Settings > FacetWP > Settings]";
         }
 
         // Generate the template HTML
@@ -177,6 +194,7 @@ class FacetWP_Renderer
             'page'          => (int) $this->query_args['paged'],
             'per_page'      => (int) $this->query_args['posts_per_page'],
             'total_rows'    => (int) $this->query->found_posts,
+            'total_rows_unfiltered' => (int) count( FWP()->unfiltered_post_ids ),
             'total_pages'   => 1,
         ];
 
@@ -333,7 +351,7 @@ class FacetWP_Renderer
             // Subsequent ajax requests
             elseif ( ! empty( $this->http_params['archive_args'] ) ) {
                 foreach ( $this->http_params['archive_args'] as $key => $val ) {
-                    if ( in_array( $key, [ 'cat', 'tag_id', 'taxonomy', 'term' ] ) ) {
+                    if ( in_array( $key, [ 'cat', 'tag_id', 'taxonomy', 'term', 's' ] ) ) {
                         $defaults[ $key ] = $val;
                     }
                 }
@@ -384,7 +402,7 @@ class FacetWP_Renderer
         // Allow hooks to modify the default post IDs
         $post_ids = apply_filters( 'facetwp_pre_filtered_post_ids', $query->posts, $this );
 
-        // Store the unfiltered post IDs
+        // Store the original post IDs (before facet filtering is applied)
         FWP()->unfiltered_post_ids = $post_ids;
 
         foreach ( $this->facets as $facet_name => $the_facet ) {
@@ -451,11 +469,14 @@ class FacetWP_Renderer
 
         $post_ids = apply_filters( 'facetwp_filtered_post_ids', array_values( $post_ids ), $this );
 
-        // Store the filtered post IDs
+        // Store the final post IDs (after facet filtering has been applied)
         FWP()->filtered_post_ids = $post_ids;
 
-        // Set a flag for whether filtering is applied
-        FWP()->is_filtered = ( FWP()->filtered_post_ids !== FWP()->unfiltered_post_ids );
+        // Have any facets applied changes?
+        FWP()->is_filtered = ( FWP()->unfiltered_post_ids !== $post_ids );
+
+        // Have any hooks modified the unfiltered post IDs?
+        FWP()->is_modified = ( FWP()->unfiltered_post_ids !== $query->posts );
 
         // Return a zero array if no matches
         return empty( $post_ids ) ? [ 0 ] : $post_ids;
@@ -594,7 +615,8 @@ class FacetWP_Renderer
             'settings'      => FWP()->helper->settings['settings'],
             'last_indexed'  => $last_indexed,
             'row_counts'    => FWP()->helper->get_row_counts(),
-            'hooks_used'    => $this->get_hooks_used()
+            'hooks_used'    => $this->get_hooks_used(),
+            'post_types'    => FWP()->helper->get_indexable_types()
         ];
 
         // Reduce debug payload
@@ -619,8 +641,13 @@ class FacetWP_Renderer
     function get_hooks_used() {
         $relevant_hooks = [];
 
+        $match_tags = apply_filters( 'facetwp_debug_hooks', [
+            'pre_get_posts',
+            'posts_results'
+        ]);
+
         foreach ( $GLOBALS['wp_filter'] as $tag => $hook_data ) {
-            if ( 0 === strpos( $tag, 'facetwp' ) || 'pre_get_posts' == $tag ) {
+            if ( 0 === strpos( $tag, 'facetwp' ) || in_array( $tag, $match_tags ) ) {
                 foreach ( $hook_data->callbacks as $callbacks ) {
                     foreach ( $callbacks as $cb ) {
                         if ( is_string( $cb['function'] ) && false !== strpos( $cb['function'], '::' ) ) {
@@ -648,7 +675,7 @@ class FacetWP_Renderer
 
                         // ignore built-in hooks
                         if ( false === strpos( $filename, 'plugins/facetwp' ) ) {
-                            if ( false !== strpos( $filename, 'wp-content' ) ) {
+                            if ( false !== strpos( $filename, 'wp-content' ) || false !== strpos( $tag, 'facetwp' ) ) {
                                 $relevant_hooks[ $tag ][] = $filename . ':' . $ref->getStartLine();
                             }
                         }

@@ -3,6 +3,10 @@
 class FacetWP_Facet
 {
 
+    public $label;
+    public $fields = [];
+
+
     /**
      * Grab the orderby, as needed by several facet types
      * @since 3.0.4
@@ -48,13 +52,13 @@ class FacetWP_Facet
      * Grab the limit, and support -1
      * @since 3.5.4
      */
-    function get_limit( $facet, $default = 10 ) {
-        $count = $facet['count'];
+    function get_limit( $facet, $default = 10, $field = 'count' ) {
+        $count = $facet[ $field ] ?? $default;
 
         if ( '-1' == $count ) {
             return 1000;
         }
-        elseif ( ctype_digit( $count ) ) {
+        elseif ( ctype_digit( "$count" ) ) { // ctype_digit expects input string
             return $count;
         }
 

@@ -47,6 +47,7 @@ window.FWP = (($) => {
                     $(has_loop).addClass('facetwp-template');
                 }
                 else {
+                    console.error('FacetWP has not detected a listing template');
                     return;
                 }
             }
@@ -67,8 +68,9 @@ window.FWP = (($) => {
 
                     var selections = '';
                     var skipped = ['pager', 'reset', 'sort'];
+                    var selected_facets = ! FWP.loaded && ! FWP.is_bfcache && $.isset(FWP_HTTP.url_vars) ? Object.assign(FWP.facets, FWP_HTTP.url_vars): FWP.facets;
 
-                    $.each(FWP.facets, (val, key) => {
+                    $.each(selected_facets, (val, key) => {
                         if (val.length < 1 || ! $.isset(FWP.settings.labels[key]) || skipped.includes(FWP.facet_type[key])) {
                             return true; // skip facet
                         }
@@ -95,7 +97,9 @@ window.FWP = (($) => {
                             values += '<span class="facetwp-selection-value" data-value="' + choice.value + '">' + FWP.helper.escapeHtml(choice.label) + '</span>';
                         });
 
-                        selections += '<li data-facet="' + key + '"><span class="facetwp-selection-label">' + FWP.settings.labels[key] + ':</span> ' + values + '</li>';
+                        if ('' !== values) {
+                            selections += '<li data-facet="' + key + '"><span class="facetwp-selection-label">' + FWP.settings.labels[key] + ':</span> ' + values + '</li>';
+                        }
                     });
 
                     if ('' !== selections) {
@@ -572,8 +576,31 @@ window.FWP = (($) => {
 
                 FWP.paged = $(this).attr('data-page');
                 FWP.soft_refresh = true;
+
+                let facet_name = $(this).closest('.facetwp-type-pager').attr('data-name');
+                FWP.scroll_target = ( 'string' == typeof facet_name) ? FWP.settings[facet_name].scroll_target : '';
+                FWP.scroll_offset = ( '' != FWP.scroll_target && 'number' == typeof Number(FWP.settings[facet_name].scroll_offset) ) ? FWP.settings[facet_name].scroll_offset : 0;
                 FWP.refresh();
             });
+
+            FWP.hooks.addAction('facetwp/loaded', function() {
+                try {
+                    if ( !FWP.loaded && 1 < FWP.settings.pager.page ) {
+                        let numbers_pager = Object.keys(FWP.settings).filter(key => FWP.settings[key].hasOwnProperty('scroll_target'));
+                        let facet_name = numbers_pager[0];
+                        FWP.scroll_target = ( 'string' == typeof facet_name) ? FWP.settings[facet_name].scroll_target : '';
+                        FWP.scroll_offset = ( '' != FWP.scroll_target && 'number' == typeof Number(FWP.settings[facet_name].scroll_offset) ) ? FWP.settings[facet_name].scroll_offset : 0;
+                    }
+                    let target = document.querySelector(FWP.scroll_target);
+                    let targetPos = target.getBoundingClientRect().top + Number(FWP.scroll_offset);
+                    window.scrollBy({ top: targetPos, behavior: 'smooth' });
+                }
+                catch(e) {
+                    // do nothing
+                }
+                FWP.scroll_target = ''; // remove scroll
+                FWP.scroll_offset = ''; // remove scroll
+            }, 100 );
 
             // Use jQuery if available for select2
             var $f = ('function' === typeof jQuery) ? jQuery : fUtil;

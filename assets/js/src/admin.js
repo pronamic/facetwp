@@ -69,6 +69,10 @@
                             title: FWP.__('Spacing between results'),
                             defaultValue: 10
                         },
+                        no_results_text: {
+                            type: 'textarea',
+                            title: FWP.__('No results text')
+                        },
                         text_style: {
                             type: 'text-style',
                             title: FWP.__('Text style'),
@@ -316,7 +320,7 @@
                     let fields = [];
 
                     if ('layout' == type) {
-                        fields.push('num_columns', 'grid_gap');
+                        fields.push('num_columns', 'grid_gap', 'no_results_text');
                     }
 
                     if ('row' == type) {
@@ -1368,11 +1372,42 @@
         Vue.component('facet-edit', {
             data() {
                 return {
-                    facet: {}
+                    facet: {},
+                    codeEditors: {
+                        marker_content: null
+                    }
                 }
             },
             created() {
                 this.facet = this.$root.editing;
+            },
+            mounted() {
+                if ('map' === this.facet.type) {
+
+                    // Init template code editor
+                    this.initCodeMirror('marker-content-editor', 'marker_content', false);
+                }
+            },
+            watch: {
+                'facet.ui_type': function(val) {
+                    switch (val) {
+                        case 'radio':
+                            Vue.delete(this.facet, 'multiple');
+                            Vue.delete(this.facet, 'show_expanded');
+                            Vue.delete(this.facet, 'hierarchical');
+                            break;
+                        case 'dropdown':
+                            Vue.delete(this.facet, 'multiple');
+                            Vue.delete(this.facet, 'show_expanded');
+                            break;
+                        case 'checkboxes':
+                            Vue.delete(this.facet, 'multiple');
+                            break;
+                        case 'fselect':
+                            Vue.delete(this.facet, 'show_expanded');
+                            break;
+                    }
+                }
             },
             methods: {
                 setName(e) {
@@ -1380,6 +1415,42 @@
                 },
                 unlock() {
                     Vue.delete(this.facet, '_code');
+                },
+                initCodeMirror(textareaId, type, reset) {
+                    try {
+                        let textarea = document.getElementById(textareaId);
+
+                        // Reset editor and start over when switching facet type and back to Map
+                        // Same behavior as other facet settings when switching facet type
+                        if (reset) {
+                            this.codeEditors[type] = null;
+                        }
+                        let editor = wp.codeEditor.initialize(jQuery(textarea), fwp_editor_settings);
+
+                        // Update when editor content changed
+                        this.updateCodeMirrorContent(editor, type);
+
+                        // Store a reference to the CodeMirror instance
+                        this.codeEditors[type] = editor;
+
+                    } catch (error) {
+                        console.error('Error initializing CodeMirror:', error);
+                    }
+                },
+                updateCodeMirrorContent(editor, type) {
+
+                    // Process editor changes so they can be saved
+                    try {
+                        if (editor !== null) {
+                            editor.codemirror.on('change', () => {
+                                let newContent = editor.codemirror.getValue();
+                                newContent = JSON.parse(JSON.stringify(newContent));
+                                Vue.set(this.facet, type, newContent);
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error updating CodeMirror content:', error);
+                    }
                 }
             },
             template: `
@@ -1420,7 +1491,7 @@
                             <data-sources :facet="facet"></data-sources>
                         </div>
                     </div>
-                    <facet-settings :facet="facet"></facet-settings>
+                    <facet-settings :facet="facet" :initCodeMirror="initCodeMirror"></facet-settings>
                 </div>
             </div>
             `
@@ -1431,7 +1502,11 @@
             data() {
                 return {
                     template: {},
-                    tab: 'display'
+                    tab: 'display',
+                    codeEditors: {
+                        template: null,
+                        query: null
+                    }
                 }
             },
             created() {
@@ -1460,6 +1535,28 @@
                     });
                 }
             },
+            mounted() {
+
+                // Init template code editor
+                this.initCodeMirror('template-editor', 'template');
+
+                // Update query editor when 'Convert to query args' button is clicked
+                this.$root.$on('query-updated', () => {
+                    this.codeEditors['query'].codemirror.setValue(this.template.query);
+                });
+            },
+            watch: {
+                tab(newTab, oldTab) {
+
+                    // Init query code editor
+                    if (newTab !== oldTab) {
+                        if (newTab === 'query') {
+                            this.initCodeMirror('query-editor', 'query');
+                            this.refreshCodeMirror(this.codeEditors['query']);
+                        }
+                    }
+                }
+            },
             methods: {
                 setName(e) {
                     this.template.name = this.$root.sanitizeName(e.target.innerHTML);
@@ -1470,9 +1567,61 @@
                 switchMode() {
                     const now = this.template.modes[this.tab];
                     this.template.modes[this.tab] = ('visual' === now) ? 'advanced' : 'visual';
+
+                    let editor = null;
+
+                    // Refresh editor when switching to advanced on both tabs
+                    if ('visual' === now) {
+                        if (this.tab === 'display') {
+                            editor = this.codeEditors['template'];
+                        } else {
+                            editor = this.codeEditors['query'];
+                        }
+                    }
+                    this.refreshCodeMirror(editor);
+
                 },
                 unlock() {
                     Vue.delete(this.template, '_code');
+                },
+                initCodeMirror(textareaId, type) {
+                    try {
+                        let textarea = document.getElementById(textareaId);
+
+                        if (this.codeEditors[type] === null) {
+                            let editor = wp.codeEditor.initialize(jQuery(textarea), fwp_editor_settings);
+
+                            // Update when editor content changed
+                            this.updateCodeMirrorContent(editor, type);
+
+                            // Store a reference to the CodeMirror instance
+                            this.codeEditors[type] = editor;
+                        }
+                    } catch (error) {
+                        console.error('Error initializing CodeMirror:', error);
+                    }
+                },
+                refreshCodeMirror(editor) {
+                    if ( editor !== null ) {
+                        this.$nextTick(() => {
+                            editor.codemirror.refresh();
+                        });
+                    }
+                },
+                updateCodeMirrorContent(editor, type) {
+
+                    // Process editor changes so they can be saved
+                    try {
+                        if (editor !== null) {
+                            editor.codemirror.on('change', () => {
+                                let newContent = editor.codemirror.getValue();
+                                newContent = JSON.parse(JSON.stringify(newContent));
+                                Vue.set(this.template, type, newContent);
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error updating CodeMirror content:', error);
+                    }
                 }
             },
             template: `
@@ -1510,7 +1659,8 @@
                         </div>
                         <div class="table-row" v-show="template.modes.display == 'advanced'">
                             <h3>{{ 'Display Code' | i18n }} <a class="facetwp-btn" href="https://facetwp.com/help-center/listing-templates/listing-builder/using-the-listing-builder-in-dev-mode/#how-to-use-display-code-in-dev-mode" target="_blank">{{ 'Help' | i18n }}</a></h3>
-                            <textarea v-model="template.template"></textarea>
+                            <textarea id="template-editor" v-model="template.template"></textarea>
+                            <p class="note">{{ 'To search your code, click in the editor, then use Ctrl+F (Windows/Linux) or Cmd+F (Mac).' | i18n }}</p>
                         </div>
                     </div>
 
@@ -1520,7 +1670,8 @@
                         </div>
                         <div class="table-row" v-show="template.modes.query == 'advanced'">
                             <h3>{{ 'Query Arguments' | i18n }} <a class="facetwp-btn" href="https://facetwp.com/help-center/listing-templates/listing-builder/using-the-listing-builder-in-dev-mode/#how-to-use-query-arguments-in-dev-mode" target="_blank">{{ 'Help' | i18n }}</a></h3>
-                            <textarea v-model="template.query"></textarea>
+                            <textarea id="query-editor" v-model="template.query"></textarea>
+                            <p class="note">{{ 'To search your code, click in the editor, then use Ctrl+F (Windows/Linux) or Cmd+F (Mac).' | i18n }}</p>
                         </div>
                     </div>
                 </div>
@@ -1538,7 +1689,7 @@
         });
 
         Vue.component('facet-settings', {
-            props: ['facet'],
+            props: ['facet','initCodeMirror'],
             template: '<component :is="dynComponent" :facet="facet"></component>',
             methods: {
                 getFields(aliases) {
@@ -1592,15 +1743,6 @@
                     let fields = self.getFields(aliases);
                     let html = '';
 
-                    // Add UI-dependant fields
-                    if ('undefined' !== typeof facet_obj.ui_fields) {
-                        if ('undefined' !== typeof self.facet.ui_type && '' != self.facet.ui_type) {
-                            let ui_fields = facet_obj.ui_fields[self.facet.ui_type];
-                            aliases = aliases.concat(ui_fields);
-                            fields = fields.concat(this.getFields(ui_fields));
-                        }
-                    }
-
                     let combined = ['label', 'name', 'type', 'source', '_code'].concat(fields);
 
                     // Remove irrelevant settings
@@ -1649,11 +1791,22 @@
                 }
             },
             watch: {
-                'facet.type': function(val) {
+                'facet.type': function(val,oldVal) {
                     if ('search' == val || 'pager' == val || 'reset' == val || 'sort' == val) {
                         Vue.delete(this.facet, 'source');
                     }
-                }
+                    if ( val !== oldVal && 'undefined' != typeof this.facet.ui_type ) {
+                        // reset ui_type when changing facet type
+                        Vue.delete(this.facet, 'ui_type');
+                    }
+                    if ('map' == val) {
+                        this.$nextTick(() => {
+
+                            // Init template code editor
+                            this.initCodeMirror('marker-content-editor', 'marker_content', true);
+                        });
+                    }
+                },
             }
         });
 
@@ -1713,22 +1866,6 @@
             mounted() {
                 fSelect(this.$el, { 'placeholder': 'Choose facets' });
             }
-        });
-
-        Vue.component('ui-type', {
-            props: {
-                facet: Object
-            },
-            created() {
-                this.ui_fields = FWP.facet_types[this.facet.type].ui_fields || [];
-                this.sorted = Object.keys(this.ui_fields).reverse();
-            },
-            template: `
-            <select class="facet-ui-type" v-model="facet.ui_type">
-                <option value="">{{ 'None' | i18n }}</option>
-                <option v-for="name in sorted" :value="name" :selected="facet.ui_type == name">{{ FWP.facet_types[name].label }}</option>
-            </select>
-            `
         });
 
         Vue.component('sort-options', {
@@ -1818,6 +1955,71 @@
             }
         });
 
+        Vue.component('color-picker', {
+            props: {
+                facet: Object,
+                settingName: {
+                    type: String,
+                    default: 'color'
+                },
+                defaultColor: {
+                    type: String,
+                    default: '#000'
+                },
+            },
+            template: `
+            <div class="color-wrap">
+                <div class="color-canvas">
+                    <span class="color-preview"></span>
+                    <input type="text" :class="className" v-model="facet[settingName]" :placeholder="colorName" />
+                </div>
+                <span class="color-clear">X</span>
+            </div>`,
+            created() {
+                if ('undefined' === typeof this.facet[this.settingName]) {
+                    this.facet[this.settingName] = this.defaultColor;
+                }
+            },
+            computed: {
+                className() {
+                    return 'facet-' + this.settingName.replace(/_/g, '-') + ' color-input';
+                },
+                colorName() {
+                    return this.defaultColor;
+                }
+            },
+            mounted() {
+                let self = this;
+                let $canvas = self.$el.getElementsByClassName('color-canvas')[0];
+                let $preview = self.$el.getElementsByClassName('color-preview')[0];
+                let $input = self.$el.getElementsByClassName('color-input')[0];
+                let $clear = self.$el.getElementsByClassName('color-clear')[0];
+                $preview.style.backgroundColor = $input.value;
+
+                let picker = new Picker({
+                    parent: $canvas,
+                    popup: 'right',
+                    alpha: false,
+                    onDone(color) {
+                        let hex = color.hex().substr(0, 7);
+                        self.facet[self.settingName] = hex;
+                        $input.value = hex;
+                        $preview.style.backgroundColor = hex;
+                    }
+                });
+
+                picker.onOpen = function(color) {
+                    picker.setColor($input.value);
+                };
+
+                $clear.addEventListener('click', function() {
+                    self.facet[self.settingName] = self.defaultColor;
+                    $input.value = self.defaultColor;
+                    $preview.style.backgroundColor = $input.value;
+                });
+            }
+        });
+
         // Vue instance
         FWP.vue = new Vue({
             el: '#app',
@@ -1880,6 +2082,9 @@
                     if ('support' === which) {
                         this.is_support_loaded = true;
                     }
+                    const url = new URL(location);
+                    url.searchParams.set("tab", which);
+                    history.pushState({}, "", url);
                 },
                 getItemLabel() {
                     return this.editing.label;
@@ -1965,15 +2170,15 @@
                                     window.setStatus('ok', FWP.__('Indexing complete'));
 
                                     // Update the row counts
-                                    $.each(data.rows, function(count, facet_name) {
-                                        Vue.set(self.row_counts, facet_name, count);
+                                    $.each(self.$root.app.facets, function(facet) {
+                                        Vue.set(self.row_counts, facet.name, data.rows[facet.name]);
                                     });
                                 }
                             }
                             else if (isNumeric(data.pct)) {
                                 window.setStatus('load', FWP.__('Indexing') + '... ' + data.pct + '%');
                                 self.is_indexing = true;
-    
+
                                 self.timeout = setTimeout(() => {
                                     self.getProgress();
                                 }, 5000);
@@ -2016,6 +2221,9 @@
                             json = json.replace(/[\}]/g, ']');
                             json = json.replace(/":/g, '" =>');
                             template.query = json;
+
+                            // Emit an event when template.query is changed to trigger updating the editor
+                            this.$root.$emit('query-updated');
                         }
                     })
                 },
@@ -2062,6 +2270,157 @@
                         }
                     })
                 },
+                
+                checkApi(testTypes, apikey) {
+
+                    const statuses = {};
+                    const doTests = testTypes.split(",");
+
+                    const updateStatus = ( test, message, status = 'none', action = 'none' ) => {
+                        const testEl = document.querySelector('.facetwp-api-status .test-' + test);
+                        testEl.innerHTML = message;
+                        testEl.classList = '';
+                        testEl.classList.add( 'test-'+test );
+                        testEl.classList.add( 'status-'+status);
+                        testEl.classList.add( 'action-'+action);
+                        statuses[test] = status;
+                    }
+                    
+                    if (!/AIza[0-9A-Za-z\-_]{35}/.test(apikey)) {
+                        alert( FWP.__('Your Google Maps API key format is invalid. Please check your key before continuing.') );
+                        return false; // Invalid format
+                    }
+
+                    const prompt = FWP.__('Each test will count as one billable API request in your Google Cloud account. Continue?');
+                    if (confirm(prompt)) {
+                        updateStatus( 'status', FWP.__('Testing ... '), 'testing', 'testing' );
+                    } else {
+                        return;
+                    }
+
+                    const testFunctions = {};
+
+                    testFunctions.checkPlaces = async () => {
+                        updateStatus( 'places', FWP.__('Checking Places API (New) ...'), 'testing', 'testing' );                        
+                        const placeUrl = `https://places.googleapis.com/v1/places/ChIJj61dQgK6j4AR4GeTYWZsKWw?fields=id,displayName,formattedAddress&key=${apikey}`;
+
+                        try {
+                            const response = await fetch(placeUrl);
+                            if (!response.ok) {
+                                if ('403' == response.status) {
+                                    throw new Error('permission denied');
+                                } else {
+                                    throw new Error('unknown error');
+                                }
+                            } else {
+                                updateStatus('places', '<span>' + FWP.__('Places API (New)') + ' </span> – <span class="status">' + FWP.__('connected ') + '</span>', 'pass', 'testing');
+                            }
+                        } catch (error) {
+                            updateStatus('places', '<span>' + FWP.__('Places API (New)') + ' </span> – <span class="status">' + FWP.__('connection failed: ') + error.message + '</span>', 'fail', 'testing');
+                        }
+                    }
+                    
+                    testFunctions.checkPlaceslegacy = async () => {
+                        updateStatus( 'placeslegacy', FWP.__('Checking Places API (Legacy) ...'), 'testing', 'testing' );                        
+                        
+                        this.loadGmaps(apikey);
+
+                        const {PlacesService} = await google.maps.importLibrary("places");
+
+                        const service = new PlacesService(
+                            document.createElement('div')
+                        );
+
+                        service.getDetails({
+                            placeId: 'ChIJj61dQgK6j4AR4GeTYWZsKWw',
+                            fields: ['geometry']
+                        }, function(place, status) {
+                            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                                updateStatus('placeslegacy', '<span>' + FWP.__('Places API (Legacy)') + ' </span> – <span class="status">' + FWP.__('connected ') + '</span>', 'pass', 'testing');
+                            } else {
+                                updateStatus('placeslegacy', '<span>' + FWP.__('Places API (Legacy)') + ' </span> – <span class="status">' + FWP.__('connection failed: ') + status + '</span>', 'fail', 'testing');
+                            }
+                        });
+                    }
+
+                    testFunctions.checkGeocoder = async () => {                        
+                        updateStatus( 'geocoder', FWP.__('Checking Geocoding API ...'), 'testing', 'testing' ); 
+
+                        this.loadGmaps(apikey);
+
+                        const {Geocoder} = await google.maps.importLibrary("geocoding");                        
+                        const latlng = { lat: 40.714224, lng: -73.961452 };
+                        const geocoding = new Geocoder;
+
+                        geocoding.geocode({ 'location': latlng }, function(results, status) {
+                            if (status === google.maps.GeocoderStatus.OK) {
+                                updateStatus('geocoder', '<span>' + FWP.__('Geocoding API') + ' </span> – <span class="status">' + FWP.__('connected ') + '</span>', 'pass', 'testing');
+                            } else {
+                                updateStatus('geocoder', '<span>' + FWP.__('Geocoding API') + ' </span> – <span class="status">' + FWP.__('connection failed: ') + status + '</span>', 'fail', 'testing');
+                            }
+                        });
+                    }
+
+                    testFunctions.checkMaps = async () => {
+
+                        updateStatus( 'maps', FWP.__('Checking Maps JavaScript API ...'), 'testing', 'testing' );    
+
+                        this.loadGmaps(apikey);
+
+                        const { Map } = await google.maps.importLibrary("maps");
+
+                        const mapDiv = document.createElement("div");
+                        mapDiv.id = "map";
+                        mapDiv.style.width = "1px";
+                        mapDiv.style.height = "1px";
+                        document.getElementsByTagName('body')[0].appendChild(mapDiv);
+                        const map = new Map(document.getElementById("map"), {
+                            center: { lat: -34.397, lng: 150.644 },
+                            zoom: 8,
+                        });
+                        map.addListener('tilesloaded', function() {
+                            updateStatus( 'maps', '<span>' + FWP.__('Maps JavaScript API') + ' </span> – <span class="status">' + FWP.__('connected') + '</span>', 'pass', 'testing' );
+                        });
+
+                    }
+
+                    const validTests = [ 'maps', 'places', 'placeslegacy', 'geocoder' ];
+                    validTests.forEach((t) => {
+                        if ( doTests.includes(t) ) {
+                            let tn = "check"+t.charAt(0).toUpperCase()+t.slice(1);
+                            testFunctions[tn]();
+                        } 
+                    });
+                                
+
+                    setTimeout(() => {
+                        updateStatus( 'status', FWP.__('Test results:'), 'done', 'testing' );
+                        'testing' !== statuses.maps || updateStatus( 'maps', '<span>' + FWP.__('Maps JavaScript API') + ' </span> – <span class="status">' + FWP.__('connection failed') + '</span>', 'fail', 'testing' );
+                        'testing' !== statuses.geocoder || updateStatus( 'geocoder', '<span>' + FWP.__('Geocoding API') + ' </span> – <span class="status">' + FWP.__('connection failed') + '</span>', 'fail', 'testing' );
+                        'testing' !== statuses.places || updateStatus( 'places', '<span>' + FWP.__('Places API (New)') + ' </span> – <span class="status">' + FWP.__('connection failed') + '</span>', 'fail', 'testing' );
+                        'testing' !== statuses.placeslegacy || updateStatus( 'placeslegacy', '<span>' + FWP.__('Places API (Legacy)') + ' </span> – <span class="status">' + FWP.__('connection failed') + '</span>', 'fail', 'testing' );
+
+                    }, "2000");
+
+                },
+                loadGmaps(apikey) {                   
+                    /** we can only load the maps scripts once without reloading the page */
+                    if ( !this.$root.gmapsLoaded ) {
+                        let scriptTag = document.createElement('script');
+                        scriptTag.id = "fwp-gmaps-api";
+                        scriptTag.innerText = '(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=\`https://maps.${c}apis.com/maps/api/js?\`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({ key: "'+apikey+'", v: "quarterly", });';
+                        document.getElementsByTagName('head')[0].appendChild(scriptTag);
+                        this.$root.gmapsLoaded = true;
+                    }
+                },
+                resetCheckApi() {
+                    let prompt = FWP.__('FacetWP\'s settings page needs to reload to test a different Google Maps API key. Unsaved changes to other settings will be discarded. Continue?');
+                    if (confirm(prompt)) {
+                        window.location.reload();
+                    } else {
+                        return;
+                    }
+                },
                 isNameEditable({name}) {
                     this.is_name_editable = ('' == name || 'new_' == name.substr(0, 4));
                 },
@@ -2072,10 +2431,11 @@
                 },
                 sanitizeName(name) {
                     let val = name.trim().toLowerCase();
+                    let res = [ 'pager', 'sort', 'labels', 'length', 'name', 'method', 'num_choices' ];
                     val = val.replace(/[^\w- ]/g, ''); // strip invalid characters
                     val = val.replace(/[- ]/g, '_'); // replace space and hyphen with underscore
                     val = val.replace(/[_]{2,}/g, '_'); // strip consecutive underscores
-                    val = ('pager' == val || 'sort' == val || 'labels' == val) ? val + '_' : val; // reserved
+                    val = res.includes(val) ? val + '_' : val; // reserved
                     return val;
                 },
                 documentClick({target}) {
@@ -2101,7 +2461,17 @@
                 document.addEventListener('click', this.documentClick);
             },
             mounted() {
+                let params = new URLSearchParams(document.location.search);
+                let tab = params.get("tab");
+                null == tab || !['facets', 'templates', 'settings', 'support'].includes(tab) || this.tabClick(tab);
                 this.getProgress();
+            },
+            watch: {
+                'app.settings.gmaps_api_key': function(oldVal,newVal) {
+                    if ( this.$root.gmapsLoaded && oldVal != newVal && '' != newVal) {
+                        this.$root.gmapsChanged = true;
+                    }
+                }
             }
         });
     }
@@ -2123,6 +2493,35 @@
 
         $().on('click', '.facetwp-response-wrap', () => {
             $('.facetwp-response').toggleClass('visible');
+        });
+
+        $().on('click', '.export-all', (e) => {
+            let $opts = $('.export-items').next('.fs-wrap');
+            let selectedType = "undefined" != typeof e.target.dataset.value ? e.target.dataset.value+"-" : "";
+            $opts.find('.fs-option:not(.selected)').each(function() {
+                let $opt = $(this);
+                if ( $opt.attr('data-value').includes(selectedType) ) {
+                    $opt.trigger('click');
+                }
+            });
+            $opts.find('.fs-option.selected').each(function() {
+                let $opt = $(this);
+                if ( !$opt.attr('data-value').includes(selectedType) ) {
+                    $opt.trigger('click');
+                }
+            });
+            $opts.nodes[0]._rel.fselect.open();
+            e.stopImmediatePropagation();
+        });
+
+        $().on('click', '.export-none', (e) => {
+            let $opts = $('.export-items').next('.fs-wrap');
+            $opts.find('.fs-option.selected').each(function() {
+                let $opt = $(this);
+                $opt.trigger('click');
+            });
+            $opts.nodes[0]._rel.fselect.open();
+            e.stopImmediatePropagation();
         });
 
         // Export
